@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>photogrammetry-capture-motion</name>
+  <version>0.0.1</version>
+  <description>
+    <p>ROS Package: "Photogrammetry Capture Motion"</p>
+    <p>
+      This package contains launch files and python scripts to...
+        * calculate a motion path to capture photos of a presented part
+        * actuate robotic arm to execute planned path
+	* call external camera control package to capture images for photogrammetry
+    </p>
+    <p>
+      <b>Hardware Application</b>
+    </p>
+    <ul>
+      <li>Motoman GP7 - Default - ROS Industrial</li>
+    </ul>
+    <p>
+      Before using any of the files included in this package, be sure to check
+      they are correct for the particular robot model and configuration you
+      intend to use them with. Further, confirm motion with simulation prior
+      to physical testing.
+    </p>
+  </description>
+
+  <author>Adam Buynak</author>
+  <author>Andrew Schellenberg</author>
+  <maintainer email="buynak.9@buckeyemail.osu.edu">acbuynak</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>moveit_core</build_depend>
+  <build_depend>moveit_ros_planning</build_depend>
+  <build_depend>moveit_ros_planning_interface</build_depend>
+  <build_depend>moveit_ros_perception</build_depend>
+  <build_depend>moveit_visual_tools</build_depend>
+  <build_depend>pcl_ros</build_depend>
+  <build_depend>pcl_conversions</build_depend>
+
+  <exec_depend>motoman_gp7_moveit_config</exec_depend>
+  <exec_depend>moveit_core</exec_depend>
+  <exec_depend>moveit_commander</exec_depend>
+  <exec_depend>moveit_fake_controller_manager</exec_depend>
+  <exec_depend>moveit_ros_planning_interface</exec_depend>
+  <exec_depend>moveit_ros_perception</exec_depend>
+  <exec_depend>moveit_visual_tools</exec_depend>
+  <exec_depend>pcl_ros</exec_depend>
+  <exec_depend>pcl_conversions</exec_depend>
+
+  <test_depend>moveit_resources</test_depend>
+
+</package>
