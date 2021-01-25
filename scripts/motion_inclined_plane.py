@@ -300,9 +300,9 @@ def main():
     pose_joint = [0.2,0.2,0.2,0.2,0.2,0.2]
     robot.goto_joint_posn(pose_joint)
 
-    #raw_input('Begin Sequence <enter>')
+    # raw_input('Begin Sequence <enter>')
 
-    ## Path Planning & Execution
+    # Path Planning & Execution
     # ############################
     #
     #
@@ -317,6 +317,7 @@ def main():
     return
   except KeyboardInterrupt:
     return
+
 
 if __name__ == '__main__':
   main()
