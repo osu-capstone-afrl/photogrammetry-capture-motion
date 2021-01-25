@@ -4,7 +4,7 @@ import numpy as np
 class Plane(object):
     """Container for defining a plane by a list of x-by-z equally spaced points """
     def __init__(self, x_num, z_num, x_len, z_len):
-        # private
+        # internal
         self._x_num = x_num
         self._z_num = z_num
         self._x_len = x_len

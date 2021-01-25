@@ -33,22 +33,20 @@ test_plane = Plane(6, 6, 5, 5)
 
 test_plane_2 = Plane(8, 6, 5, 3)
 
+a, b, c = np.indices((5,5,5))
+voxels = a & b & c
+
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
+ax.voxels(voxels, facecolors='red', edgecolor='k')
 
 m = 'o'
 for p in test_plane.points:
-    xs = p[0]
-    ys = p[1]
-    zs = p[2]
-    ax.scatter(xs, ys, zs, marker=m)
+    ax.scatter(p[0], p[1], p[2], marker=m)
 
 n = '^'
 for p in test_plane_2.points:
-    xs = p[0]
-    ys = p[1]
-    zs = p[2]
-    ax.scatter(xs, ys, zs, marker=n)
+    ax.scatter(p[0], p[1], p[2], marker=n)
 
 ax.set_xlabel('X Label')
 ax.set_xlim([-5, 5])
