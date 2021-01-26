@@ -35,10 +35,11 @@ from math import pi, radians
 from std_msgs.msg import String
 from moveit_commander.conversions import pose_to_list
 from motoman_msgs.srv import ReadSingleIO, WriteSingleIO
+import time
 
 # Capstone specific imports
-import backend
-from geo_obj import Plane
+from backend import DetectedObject
+from backend import InclinedPlane
 
 ## Quaternion Tools
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
@@ -296,8 +297,19 @@ def main():
 
         ## Example Cartesian Pose Instruction
         raw_input('Go to Example Cart Pose <enter>')
-        pose_cart = [0.3,-0.4,0.8,0,radians(90),0]
-        robot.goto_Quant_Orient(pose_cart)
+
+        # Example detected object definition
+        blade = DetectedObject([0.14, 0.06, 0.04],
+                               [0., 0., 0.],
+                               0)
+
+        for pose in blade.get_positions():
+            robot.goto_Quant_Orient(pose)
+            time.sleep(0.2)
+
+
+        # pose_cart = [0.3,-0.4,0.8,0,radians(90),0]
+        # robot.goto_Quant_Orient(pose_cart)
         '''
         ## Example Joint Pose Instruction
         raw_input('Go to Example Joint Pose <enter>')
