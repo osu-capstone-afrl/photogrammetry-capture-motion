@@ -20,7 +20,7 @@ class Plane(object):
         height = 0
         temp_list = [[0, 0, 0]]  # the temp list starts with the origin
 
-        for i in range(self._z_num - 1):
+        for i in range(self._z_num):
             for j in range(self._x_num - 1):
                 temp_list.append([temp_list[-1][0] + self._x_space, temp_list[-1][1], temp_list[-1][2]])
 
