@@ -211,8 +211,8 @@ class moveManipulator(object):
         current_joints = self.move_group.get_current_joint_values()
         return all_close(joint_goal, current_joints, 0.01)
 
-    def add_object(self, cart_location, size, timeout=4):
-        ## Add object Element to Collision Scene
+    def add_box_object(self, cart_location, size, timeout=4):
+        ## Add object cube Element to Collision Scene
 
         # Create object
         object_pose = geometry_msgs.msg.PoseStamped()
@@ -221,13 +221,28 @@ class moveManipulator(object):
         object_pose.pose.position.x = cart_location[0]
         object_pose.pose.position.y = cart_location[1]
         object_pose.pose.position.z = cart_location[2]
-        self.object_name = "object"
+        self.object_name = "box_" + str(cart_location[0]) + str(cart_location[1]) + str(cart_location[2])
 
         # Add object to scene
         self.scene.add_box(self.object_name, object_pose, size=(size[0], size[1], size[2]))
 
         # Alternively, Use Mesh of Object. (mixed success with this. See moveit webpage)
         # self.scene.add_mesh(self.object_name, object_pose, filename="$(find object)/meshes/object-model.stl", size=(1,1,1))
+
+    def add_sphere_object(self, cart_location, size, timeout=4):
+        ## Add object sphere Element to Collision Scene
+
+        # Create object
+        object_pose = geometry_msgs.msg.PoseStamped()
+        object_pose.header.frame_id = "base_link"
+        object_pose.pose.orientation.w = 1.0
+        object_pose.pose.position.x = cart_location[0]
+        object_pose.pose.position.y = cart_location[1]
+        object_pose.pose.position.z = cart_location[2]
+        self.object_name = "sphere_" + str(cart_location[0]) + str(cart_location[1]) + str(cart_location[2])
+
+        # Add object to scene
+        self.scene.add_sphere(self.object_name, object_pose, radius=size)
 
     def remove_object(self, timeout=4):
         ## Removing Objects from the Planning Scene
@@ -328,7 +343,7 @@ def main():
         object_size = [0.14, 0.06, 0.04]
         object_posn = [0.50, 0.0, 0.4]
         rot_z = 0
-        demo_blade = DetectedObject(object_size, object_posn, rot_z)
+        demo_blade = InclinedPlane(object_size, object_posn, rot_z)
 
         # Publish PoseVectors to ROS Topic for RViz
         pose_geom = demo_blade.get_positions()
@@ -338,7 +353,7 @@ def main():
 
 
         # Add Object to Collision Planning Space
-        robot.add_object(object_posn, object_size)
+        robot.add_box_object(object_posn, object_size)
 
 
 
@@ -350,10 +365,13 @@ def main():
         print("\nEXECUTE INCLINED PLANES RASTER MOTION")
         poseList = demo_blade.get_positions()
 
+        radius = 0.005
+
         try:
-            for pose in poseList[0:5]:  #Debugging. Only doing first 5 poses
-                print(pose)
-                robot.goto_Quant_Orient(pose)
+            for msg in poseList[0:5]:  #Debugging. Only doing first 5 poses
+                print(msg)
+                robot.add_sphere_object(msg["Position"], radius)
+                robot.goto_Quant_Orient(msg)
                 time.sleep(0.2)
         except KeyboardInterrupt:
             return
