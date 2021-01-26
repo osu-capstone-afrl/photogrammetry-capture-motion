@@ -67,7 +67,7 @@ class Plane(object):
     def translate(self, axis, dist):
         """ Translates points around a specified axis by the specified distance """
 
-        if axis not in ['x', 'X', 'y', 'Y', 'z', 'Z']:
+        if axis not in ['x', 'X', 'y', 'Y', 'z', 'Z', 'n', 'N']:
             print "[WARN] Invalid axis in Plane.translate(), original list was not changed"
             return
 
@@ -79,4 +79,21 @@ class Plane(object):
             elif axis in ['z', 'Z']:
                 p[2] += dist
 
+        if axis in ['n', 'N']:
+            n = self.get_surf_norm()
+            for p in self.points:
+                p[0] += n[0] * dist
+                p[1] += n[1] * dist
+                p[2] += n[2] * dist
+
         return
+
+    def get_surf_norm(self):
+        """Returns the normal vector to the plane, scaled to unit length"""
+        # todo: check if the directions are consistent with what we expect
+        a = np.subtract(self.points[0], self.points[1])
+        b = np.subtract(self.points[0], self.points[-1])
+
+        norm = np.cross(a, b)
+
+        return norm / (norm**2).sum()**0.5
