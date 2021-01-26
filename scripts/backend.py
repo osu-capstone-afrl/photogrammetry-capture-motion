@@ -95,7 +95,8 @@ class DetectedObject(object):
 
     # todo: find the orientation to use
     def _get_orientations(self, vec):
-        return [0, 0, 0]
+        from math import radians
+        return [0, radians(90), 0] #Points straight down.
 
 
 # todo: move plane implementation from detect obj to this (smh)

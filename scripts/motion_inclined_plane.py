@@ -211,6 +211,29 @@ class moveManipulator(object):
         current_joints = self.move_group.get_current_joint_values()
         return all_close(joint_goal, current_joints, 0.01)
 
+    def add_object(self, cart_location, size, timeout=4):
+        ## Add object Element to Collision Scene
+
+        # Create object
+        object_pose = geometry_msgs.msg.PoseStamped()
+        object_pose.header.frame_id = "base_link"
+        object_pose.pose.orientation.w = 1.0
+        object_pose.pose.position.x = cart_location[0]
+        object_pose.pose.position.y = cart_location[1]
+        object_pose.pose.position.z = cart_location[2]
+        self.object_name = "object"
+
+        # Add object to scene
+        self.scene.add_box(self.object_name, object_pose, size=(size[0], size[1], size[2]))
+
+        # Alternively, Use Mesh of Object. (mixed success with this. See moveit webpage)
+        # self.scene.add_mesh(self.object_name, object_pose, filename="$(find object)/meshes/object-model.stl", size=(1,1,1))
+
+    def remove_object(self, timeout=4):
+        ## Removing Objects from the Planning Scene
+        ## **Note:** The object must be detached before we can remove it from the world
+        self.scene.remove_world_object(self.object_name)
+
     def act_gripper(self, request):
         ## Wrapper for rosservice to open/close gripper using Read/Write IO
 
@@ -286,47 +309,63 @@ def main():
         print "Press Enter to advance script when prompted."
         print ""
 
+
+
+        ## SETUP ##
         # Initial Values & Controls
         robot = moveManipulator()
         robot.set_accel(0.2)
         robot.set_vel(0.2)
 
         # Move to Known Start Position: All-Zeros
-        raw_input('Go to All-Zeros Position <enter>')
+        #raw_input('Go to All-Zeros Position <enter>')
         robot.goto_all_zeros()
 
-        ## Example Cartesian Pose Instruction
-        raw_input('Go to Example Cart Pose <enter>')
 
+
+        ## PLANNING ##
         # Example detected object definition
-        demo_blade = DetectedObject([0.14, 0.06, 0.04],
-                               [0.5, 0.5, 0.2],
-                               0)
+        object_size = [0.14, 0.06, 0.04]
+        object_posn = [0.50, 0.0, 0.4]
+        rot_z = 0
+        demo_blade = DetectedObject(object_size, object_posn, rot_z)
 
-        for pose in demo_blade.get_positions():
-            robot.goto_Quant_Orient(pose)
-            time.sleep(0.2)
+        # Publish PoseVectors to ROS Topic for RViz
+        pose_geom = demo_blade.get_positions()
+
+        #print(pose_geom[0])  #example of single, first pose vector
+        #rostopic pub /photogrammetry geometry_msgs/PoseArray "{header: {frame_id: 'base_frame'}, poses: pose_geom}"
 
 
-        # pose_cart = [0.3,-0.4,0.8,0,radians(90),0]
-        # robot.goto_Quant_Orient(pose_cart)
-        '''
-        ## Example Joint Pose Instruction
-        raw_input('Go to Example Joint Pose <enter>')
-        pose_joint = [0.2,0.2,0.2,0.2,0.2,0.2]
-        robot.goto_joint_posn(pose_joint)
-        '''
+        # Add Object to Collision Planning Space
+        robot.add_object(object_posn, object_size)
 
-        # raw_input('Begin Sequence <enter>')
 
-        # Path Planning & Execution
-        # ############################
-        #
-        #
-        #
-        # ############################
 
-        raw_input('Per Best Practices, return to All-Zeros Joint Position <enter>')
+        ## MOTION EXECUTION ## 
+        #~~ Check Current Pose
+        #print(robot.move_group.get_current_pose().pose)
+
+        # Attempt Incline Plane Motion
+        print("\nEXECUTE INCLINED PLANES RASTER MOTION")
+        poseList = demo_blade.get_positions()
+
+        try:
+            for pose in poseList[0:5]:  #Debugging. Only doing first 5 poses
+                print(pose)
+                robot.goto_Quant_Orient(pose)
+                time.sleep(0.2)
+        except KeyboardInterrupt:
+            return
+
+
+
+        ## CLEANUP & CLOSE ##
+        # Remove Object
+        raw_input('Remove Object <enter>')
+        robot.remove_object()
+
+        raw_input('Return to All-Zeros <enter>')
         robot.goto_all_zeros()
 
         print "============ Complete!"
