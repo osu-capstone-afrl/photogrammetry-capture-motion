@@ -299,11 +299,11 @@ def main():
         raw_input('Go to Example Cart Pose <enter>')
 
         # Example detected object definition
-        blade = DetectedObject([0.14, 0.06, 0.04],
-                               [0., 0., 0.],
+        demo_blade = DetectedObject([0.14, 0.06, 0.04],
+                               [0.5, 0.5, 0.2],
                                0)
 
-        for pose in blade.get_positions():
+        for pose in demo_blade.get_positions():
             robot.goto_Quant_Orient(pose)
             time.sleep(0.2)
 
