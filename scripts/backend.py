@@ -99,22 +99,28 @@ class InclinedPlane(DetectedObject):
     def get_positions(self):
         """Returns a list dictionaries of all positions and orientations"""
         post_and_orient = []
-        msg = {'Point': [0, 0, 0],
-               'Quaternion': [0, 0, 0, 0]}
+        msg = {'position': [0, 0, 0],
+               'quaternion': [0, 0, 0, 0]}
 
         for plane in [self._plane_length_1, self._plane_length_2, self._plane_width_1, self._plane_width_2]:
             for point in plane.points:
-                msg["Position"] = point
-                msg["Quaternion"] = self._get_orientations(point)
+                msg["position"] = point
+                msg["quaternion"] = self._get_orientations(point) #TODO== Currently returns Hard Coded Value
                 post_and_orient += [msg]
 
         return post_and_orient
 
-    # todo: find the orientation to use
+    # todo: calculate orientatin from provided vector. (adam- maybe need reference frame input as well?)
     def _get_orientations(self, vec):
         """Returns a vector with the Quaternion orientation for a position"""
         from math import radians
-        return [0, radians(90), 0] #Points straight down.
+        from tf.transformations import quaternion_from_euler
+
+        #TODO: hardcoded to orient straight down.
+        #orientation_euler = []
+        #
+
+        return list(quaternion_from_euler(0, radians(90), 0)) #Output list of quants in order x.y.z.w
 
 ''' TESTING AND VISUALIZATION BELOW '''
 

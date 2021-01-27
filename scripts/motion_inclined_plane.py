@@ -153,32 +153,10 @@ class moveManipulator(object):
         # Note: We are just planning, not asking move_group to actually move the robot yet:
         return plan, fraction
 
-    def goto_Quant_Orient(self,pose):
+    def goto_Quant_Orient(self,msg_geoPose):
         ## GOTO Pose Using Cartesian + Quaternion Pose
 
-        # Get Current Orientation in Quanternion Format
-        # http://docs.ros.org/en/api/geometry_msgs/html/msg/Pose.html
-        #q_poseCurrent = self.move_group.get_current_pose().pose.orientation
-        #print(q_poseCurrent)
-
-        # Using Quaternion's for Angle
-        # Conversion from Euler(rotx,roty,rotz) to Quaternion(x,y,z,w)
-        # Euler Units: RADIANS
-        # http://docs.ros.org/en/melodic/api/tf/html/python/transformations.html
-        # http://wiki.ros.org/tf2/Tutorials/Quaternions
-        # http://docs.ros.org/en/api/geometry_msgs/html/msg/Quaternion.html
-
-        # Convert Euler Orientation Request to Quanternion
-        q_orientGoal = quaternion_from_euler(pose[3],pose[4],pose[5],axes='sxyz')
-
-        pose_goal = geometry_msgs.msg.Pose()
-        pose_goal.position.x = pose[0]
-        pose_goal.position.y = pose[1]
-        pose_goal.position.z = pose[2]
-        pose_goal.orientation.x = q_orientGoal[0]
-        pose_goal.orientation.y = q_orientGoal[1]
-        pose_goal.orientation.z = q_orientGoal[2]
-        pose_goal.orientation.w = q_orientGoal[3]
+        pose_goal = self.rosmsg_geoPose(msg_geoPose)
 
         self.move_group.set_pose_target(pose_goal)
 
@@ -195,6 +173,49 @@ class moveManipulator(object):
         # For testing:
         current_pose = self.move_group.get_current_pose().pose
         return all_close(pose_goal, current_pose, 0.01)
+
+    def rosmsg_geoPose(self,pose):
+        ## Recieves dictionary and list formats and returns a tf2.geom.pose message
+
+        # Get Current Orientation in Quanternion Format
+        # http://docs.ros.org/en/api/geometry_msgs/html/msg/Pose.html
+        #q_poseCurrent = self.move_group.get_current_pose().pose.orientation
+        #print(q_poseCurrent)
+
+        # Using Quaternion's for Angle
+        # Conversion from Euler(rotx,roty,rotz) to Quaternion(x,y,z,w)
+        # Euler Units: RADIANS
+        # http://docs.ros.org/en/melodic/api/tf/html/python/transformations.html
+        # http://wiki.ros.org/tf2/Tutorials/Quaternions
+        # http://docs.ros.org/en/api/geometry_msgs/html/msg/Quaternion.html
+
+        if isinstance(pose,dict):
+            pose_goal = geometry_msgs.msg.Pose()
+            pose_goal.position.x = pose['position'][0]
+            pose_goal.position.y = pose['position'][1]
+            pose_goal.position.z = pose['position'][2]
+            pose_goal.orientation.x = pose['quaternion'][0]
+            pose_goal.orientation.y = pose['quaternion'][1]
+            pose_goal.orientation.z = pose['quaternion'][2]
+            pose_goal.orientation.w = pose['quaternion'][3]
+
+        elif isinstance(pose,list):
+            # Convert Euler Orientation Request to Quanternion
+            q_orientGoal = quaternion_from_euler(pose[3],pose[4],pose[5],axes='sxyz')
+
+            pose_goal = geometry_msgs.msg.Pose()
+            pose_goal.position.x = pose[0]
+            pose_goal.position.y = pose[1]
+            pose_goal.position.z = pose[2]
+            pose_goal.orientation.x = q_orientGoal[0]
+            pose_goal.orientation.y = q_orientGoal[1]
+            pose_goal.orientation.z = q_orientGoal[2]
+            pose_goal.orientation.w = q_orientGoal[3]
+
+        else:
+            print("---> Incorrect Input Format")
+
+        return pose_goal
 
     def goto_joint_posn(self,joint_goal):
         ## Go to Joint Defined position
@@ -314,6 +335,9 @@ class moveManipulator(object):
 
 
 
+
+
+
 def main():
     try:
         print "----------------------------------------------------------"
@@ -345,11 +369,6 @@ def main():
         rot_z = 0
         demo_blade = InclinedPlane(object_size, object_posn, rot_z)
 
-        # Publish PoseVectors to ROS Topic for RViz
-        pose_geom = demo_blade.get_positions()
-
-        #print(pose_geom[0])  #example of single, first pose vector
-        #rostopic pub /photogrammetry geometry_msgs/PoseArray "{header: {frame_id: 'base_frame'}, poses: pose_geom}"
 
 
         # Add Object to Collision Planning Space
@@ -370,7 +389,7 @@ def main():
         try:
             for msg in poseList[0:5]:  #Debugging. Only doing first 5 poses
                 print(msg)
-                robot.add_sphere_object(msg["Position"], radius)
+                robot.add_sphere_object(msg["position"], radius)
                 robot.goto_Quant_Orient(msg)
                 time.sleep(0.2)
         except KeyboardInterrupt:
