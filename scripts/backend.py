@@ -1,5 +1,6 @@
 import numpy as np
 from geo_obj import Plane
+from math import radians
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
@@ -97,30 +98,31 @@ class InclinedPlane(DetectedObject):
         return
 
     def get_positions(self):
-        """Returns a list dictionaries of all positions and orientations"""
-        post_and_orient = []
-        msg = {'position': [0, 0, 0],
-               'quaternion': [0, 0, 0, 0]}
+        """ Returns a list dictionaries of all positions and orientations """
+        pose_and_orient = []
 
         for plane in [self._plane_length_1, self._plane_length_2, self._plane_width_1, self._plane_width_2]:
             for point in plane.points:
-                msg["position"] = point
-                msg["quaternion"] = self._get_orientations(point) #TODO== Currently returns Hard Coded Value
-                post_and_orient += [msg]
+                print point
+                msg = {"position": point,
+                       "quaternion": self._get_orientations(point)}
+                pose_and_orient += [msg]
+                print " ERROR " if not (point == msg["position"] == pose_and_orient[-1]["position"]) else ''
 
-        return post_and_orient
+        # now we return 100 identical positions...
+        # we are adding the SAME dict 100 times...
+        return pose_and_orient
 
     # todo: calculate orientatin from provided vector. (adam- maybe need reference frame input as well?)
     def _get_orientations(self, vec):
         """Returns a vector with the Quaternion orientation for a position"""
-        from math import radians
-        from tf.transformations import quaternion_from_euler
+        #from tf.transformations import quaternion_from_euler
 
-        #TODO: hardcoded to orient straight down.
-        #orientation_euler = []
-        #
+        # TODO: hardcoded to orient straight down.
+        # orientation_euler = []
 
-        return list(quaternion_from_euler(0, radians(90), 0)) #Output list of quants in order x.y.z.w
+        #return list(quaternion_from_euler(0, radians(90), 0)) #Output list of quants in order x.y.z.w
+        return [0, radians(180), 0]  # Points straight down.
 
 ''' TESTING AND VISUALIZATION BELOW '''
 
@@ -132,11 +134,6 @@ def main():
                           0,
                           offset=0.25)
 
-    blade2 = InclinedPlane([0.14, 0.06, 0.04],
-                           [0., 0., 0.],
-                           0,
-                           offset=0)
-
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
@@ -145,9 +142,10 @@ def main():
     y = []
     z = []
     for p in blade.get_positions():
-        x += [p["Position"][0]]
-        y += [p["Position"][1]]
-        z += [p["Position"][2]]
+        print p
+        x += [p["position"][0]]
+        y += [p["position"][1]]
+        z += [p["position"][2]]
 
     # todo:  update for better visualization
     ax.plot(x, y, z, color='k')
