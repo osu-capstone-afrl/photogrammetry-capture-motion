@@ -103,7 +103,6 @@ class InclinedPlane(DetectedObject):
 
         for plane in [self._plane_length_1, self._plane_length_2, self._plane_width_1, self._plane_width_2]:
             for point in plane.points:
-                print point
                 msg = {"position": point,
                        "quaternion": self._get_orientations(point)}
                 pose_and_orient += [msg]
@@ -142,7 +141,6 @@ def main():
     y = []
     z = []
     for p in blade.get_positions():
-        print p
         x += [p["position"][0]]
         y += [p["position"][1]]
         z += [p["position"][2]]
