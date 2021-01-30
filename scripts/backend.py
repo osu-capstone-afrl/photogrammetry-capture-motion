@@ -141,19 +141,25 @@ def main():
     ax = fig.add_subplot(111, projection='3d')
 
     m = 'o'
+    x = []
+    y = []
+    z = []
     for p in blade.get_positions():
-        ax.scatter(p[0], p[1], p[2], marker=m)
+        x += [p["Position"][0]]
+        y += [p["Position"][1]]
+        z += [p["Position"][2]]
 
-    n = 'x'
-    for p in blade2.get_positions():
-        ax.scatter(p[0], p[1], p[2], marker=n)
+    # todo:  update for better visualization
+    ax.plot(x, y, z, color='k')
+    ax.scatter(x, y, z)
 
+    # Limits
     ax.set_xlabel('X Label')
-    ax.set_xlim([-0.3, 0.3])
+    #ax.set_xlim([-0.3, 0.3])
     ax.set_ylabel('Y Label')
-    ax.set_ylim([-0.3, 0.3])
+    #ax.set_ylim([-0.3, 0.3])
     ax.set_zlabel('Z Label')
-    ax.set_zlim([-0.3, 0.3])
+    #ax.set_zlim([-0.3, 0.3])
 
     plt.show()
 
