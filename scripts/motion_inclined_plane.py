@@ -190,14 +190,22 @@ class moveManipulator(object):
         # http://docs.ros.org/en/api/geometry_msgs/html/msg/Quaternion.html
 
         if isinstance(pose,dict):
+            q_orientGoal = quaternion_from_euler(pose['quaternion'][0],pose['quaternion'][1],pose['quaternion'][2],axes='sxyz')
+
             pose_goal = geometry_msgs.msg.Pose()
             pose_goal.position.x = pose['position'][0]
             pose_goal.position.y = pose['position'][1]
             pose_goal.position.z = pose['position'][2]
-            pose_goal.orientation.x = pose['quaternion'][0]
-            pose_goal.orientation.y = pose['quaternion'][1]
-            pose_goal.orientation.z = pose['quaternion'][2]
-            pose_goal.orientation.w = pose['quaternion'][3]
+            #pose_goal.orientation.x = pose['quaternion'][0]
+            #pose_goal.orientation.y = pose['quaternion'][1]
+            #pose_goal.orientation.z = pose['quaternion'][2]
+            #pose_goal.orientation.w = pose['quaternion'][3]
+
+            #Temp fix before converting eulers
+            pose_goal.orientation.x = q_orientGoal[0]
+            pose_goal.orientation.y = q_orientGoal[1]
+            pose_goal.orientation.z = q_orientGoal[2]
+            pose_goal.orientation.w = q_orientGoal[3]
 
         elif isinstance(pose,list):
             # Convert Euler Orientation Request to Quanternion
@@ -387,9 +395,9 @@ def main():
         radius = 0.005
 
         try:
-            for msg in poseList[0:5]:  #Debugging. Only doing first 5 poses
+            for msg in poseList:  #Debugging. Only doing first 5 poses poseList[0:5]
                 print(msg)
-                robot.add_sphere_object(msg["position"], radius)
+                #robot.add_sphere_object(msg["position"], radius)
                 robot.goto_Quant_Orient(msg)
                 time.sleep(0.2)
         except KeyboardInterrupt:
