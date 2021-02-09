@@ -38,8 +38,8 @@ from motoman_msgs.srv import ReadSingleIO, WriteSingleIO
 import time
 
 # Capstone specific imports
-from backend import DetectedObject
-from backend import InclinedPlane
+from path_obj import DetectedObject
+from path_obj import InclinedPlane
 
 ## Quaternion Tools
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
@@ -377,12 +377,8 @@ def main():
         rot_z = 0
         demo_blade = InclinedPlane(object_size, object_posn, rot_z)
 
-
-
         # Add Object to Collision Planning Space
         robot.add_box_object(object_posn, object_size)
-
-
 
         ## MOTION EXECUTION ## 
         #~~ Check Current Pose
@@ -390,20 +386,18 @@ def main():
 
         # Attempt Incline Plane Motion
         print("\nEXECUTE INCLINED PLANES RASTER MOTION")
-        poseList = demo_blade.get_positions()
-
         radius = 0.005
 
         try:
-            for msg in poseList:  #Debugging. Only doing first 5 poses poseList[0:5]
+            for msg in demo_blade.pose_and_orientation:  #Debugging. Only doing first 5 poses poseList[0:5]
                 print(msg)
-                #robot.add_sphere_object(msg["position"], radius)
-                robot.goto_Quant_Orient(msg)
+                # todo: @Adam to make updates this loop and verify that it pulls the position
+                # todo: and orientation properly
+                # robot.add_sphere_object(msg["position"], radius)
+                # robot.goto_Quant_Orient(msg)
                 time.sleep(0.2)
         except KeyboardInterrupt:
             return
-
-
 
         ## CLEANUP & CLOSE ##
         # Remove Object

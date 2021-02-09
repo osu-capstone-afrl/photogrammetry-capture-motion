@@ -10,8 +10,8 @@
 ## IMPORTS ##
 import rospy
 
-from backend import DetectedObject
-from backend import InclinedPlane
+from path_obj import DetectedObject
+from path_obj import InclinedPlane
 
 import geometry_msgs.msg
 
