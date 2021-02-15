@@ -10,8 +10,8 @@
 ## IMPORTS ##
 import rospy
 
-from path_obj import DetectedObject
-from path_obj import InclinedPlane
+from path_plans import DetectedObject
+from path_plans import InclinedPlane
 
 import geometry_msgs.msg
 
@@ -35,7 +35,7 @@ def rosmsg_geoPose(pose):
     # http://docs.ros.org/en/api/geometry_msgs/html/msg/Quaternion.html
 
     if isinstance(pose,dict):
-        q_orientGoal = quaternion_from_euler(pose['quaternion'][0],pose['quaternion'][1],pose['quaternion'][2],axes='sxyz')
+        q_orientGoal = quaternion_from_euler(pose['euler'][0],pose['euler'][1],pose['euler'][2],axes='sxyz')
 
         pose_goal = geometry_msgs.msg.Pose()
         pose_goal.position.x = pose['position'][0]
@@ -109,7 +109,7 @@ def main():
 
     # Generate PoseArray for ROS Node Publisher
     pose_geom = []
-    for i in demo_blade.get_positions():
+    for i in demo_blade.pose_and_orientation:
         pose_geom.append(rosmsg_geoPose(i))
 
 

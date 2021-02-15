@@ -127,7 +127,7 @@ class InclinedPlane(DetectedObject):
                 # Change that to quart
                 # put in a dict
                 msg = {"position": pose,
-                       "quaternion": angles,
+                       "euler": angles,
                        "unit": unit}  # unit is included for testing
 
                 # print "Added the position: ", pose, " with unit ", unit, " and angles ", angles
@@ -135,7 +135,7 @@ class InclinedPlane(DetectedObject):
                 # push to the self list
                 self.pose_and_orientation += [msg]
 
-        # The pose_and_orientation element is now populated with a list of dictionaries
+        # The pose_and_orientation element is now populated with a 3-element dictionary, each element containing a list.
 
         return
 
@@ -177,9 +177,9 @@ def main():
         v += [p["unit"][1]]
         w += [p["unit"][2]]
 
-        a += [np.sin([p["quaternion"][2]])*np.cos([p["quaternion"][0]])]
-        b += [np.sin([p["quaternion"][2]])*np.sin([p["quaternion"][0]])]
-        c += [np.cos([p["quaternion"][2]])]
+        a += [np.sin([p["euler"][2]])*np.cos([p["euler"][0]])]
+        b += [np.sin([p["euler"][2]])*np.sin([p["euler"][0]])]
+        c += [np.cos([p["euler"][2]])]
 
     ax.plot(x, y, z, color='k')
     ax.scatter(x, y, z)
