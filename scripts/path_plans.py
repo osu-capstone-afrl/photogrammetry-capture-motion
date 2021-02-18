@@ -19,7 +19,7 @@ class DetectedObject(object):
     # and orientations and will update the self.pose_and_orientation list.  At this point
     # there is no reason to call any member function or access any member variables other
     # than self.pose_and_orientation
-    def __init__(self, size, center, orientation):
+    def _point_method(self, size, center, orientation):
         # type: (list[int], list[int], int) -> None
         """Initialization function"""
         # Assumes that the size and center arrays are ordered from largest to smallest
@@ -40,13 +40,20 @@ class DetectedObject(object):
 
         self.pose_and_orientation = []
 
+    def _tf_method(self, center, rotation):
+
+        from transformations import transformations
+        self.tf = transformations()
+
+        self._locator = self.tf.generateTransMatrix(rotation,center)
+
 
 class InclinedPlane(DetectedObject):
     """A container for the incline plane path plan"""
     def __init__(self, size, center, orientation, x_num=5, z_num=5, slope=0.5, offset=0.25):
         # type: (list[int], list[int], int, int, int, int, int) -> None
         """Initialization function"""
-        super(InclinedPlane, self).__init__(size, center, orientation)
+        super(InclinedPlane, self)._point_method(size, center, orientation)
         self._x_num = z_num
         self._z_num = z_num
         if 0 <= slope <= 1:
@@ -140,6 +147,82 @@ class InclinedPlane(DetectedObject):
         return
 
 
+
+class SteppedRings(DetectedObject):
+    """
+    Path Plan generator for the Stepped Rings Shape
+    Relies on numpy (np)
+
+    :param size:        list[x,y,z] dimensions of presented part
+    :param center:      center of presented part in world frame coordinates
+    :param rotation:    rotation of presented part in world frame coordinates
+    :param level_count: number of stepped levels 
+    :param density:     number of points on a single level. Evenly distributed about the ring
+    """
+
+
+    def __init__(self, size, center, rotation, level_count=5, density=10):
+
+        # Setup Root Structure
+        # rotation frame hard coded to match fixed source frame
+        rotation = np.identity(3)
+        super(SteppedRings, self)._tf_method(center,rotation)
+
+        # Set smallest ring (w/o buffer)(diagonal length of rectanglular base)
+        self._min_diameter = np.hypot( size[0], size[1] )
+
+        # Set number and final height of levels (distribute n levels across height)
+        self._levels = np.linspace(0, size[2], level_count)
+
+        # Passthru variables
+        self._density = density
+
+        # Create rings
+        self._setup_rings()
+
+        return
+
+
+    def _setup_rings(self):
+
+        # Generation
+        path_result = []
+        for lvl in self._levels:
+            pheta = np.linspace(0, 2*np.pi, self._density, endpoint=False)
+            
+            xx = self._min_diameter * np.cos(pheta)
+            yy = self._min_diameter * np.sin(pheta)
+            zz = np.full_like(pheta, lvl)
+
+            for x,y,z in zip(xx,yy,zz):
+
+                # Find Orientation. ie rotation matrix
+                # TODO: Hardcode rotation for now before finding normal pointing towards self._locator origin
+                vector = self._direction([x,y,z])
+                rot_matrix = np.identity(3)
+
+                # Create transforms list
+                path_result.append( self.tf.generateTransMatrix(rot_matrix,[x,y,z]) )
+
+        # Shift path body to be framed in context of Global Fixed Frame (0,0,0)
+        self._path_tf = self.tf.convertPath2FixedFrame(path_result, self._locator)
+
+        # Convert path to Robot Poses (outputs a list of vectors x,y,z,qx,qy,qz,qw)
+        self._path_pose = self.tf.convertPath2RobotPose(self._path_tf)
+        
+        return
+
+    def _direction(self, local_point):
+
+        # TODO: Find way to create a rotation matrix or coordinate system from single vector!
+        # Find vector_z pointing from point on ring towards locator. Calculate two vectors to form a coordinate system
+        vector_z = np.subtract(local_point, self._locator[:-1,3])
+        vector_y = np.cross(vector_z, self._locator[:-1,3])
+        vector_y = np.cross(vector_y, vector_z)
+
+        return rotation_matrix
+
+
 ''' TESTING AND VISUALIZATION BELOW '''
 
 
@@ -154,48 +237,57 @@ def main():
                           twist_angle,
                           offset=0.25)
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
 
-    m = 'o'
-    x = [center_loc[0]]
-    y = [center_loc[1]]
-    z = [center_loc[2]]
-    u = [0]
-    v = [0]
-    w = [0]
-    a = [0]
-    b = [0]
-    c = [0]
+    demo_rings = SteppedRings(dimensions,center_loc, np.identity(3))
 
-    for p in blade.pose_and_orientation:
-        x += [p["position"][0]]
-        y += [p["position"][1]]
-        z += [p["position"][2]]
-
-        u += [p["unit"][0]]
-        v += [p["unit"][1]]
-        w += [p["unit"][2]]
-
-        a += [np.sin([p["euler"][2]])*np.cos([p["euler"][0]])]
-        b += [np.sin([p["euler"][2]])*np.sin([p["euler"][0]])]
-        c += [np.cos([p["euler"][2]])]
-
-    ax.plot(x, y, z, color='k')
-    ax.scatter(x, y, z)
-    ax.quiver(x, y, z, u, v, w, length=0.1, normalize=True)
-    ax.quiver(x, y, z, a, b, c, length=0.05, normalize=True, color='r')
+    from visualizations import plot_path_transforms
+    plot_path_transforms(demo_rings._path_tf)
 
 
-    # Limits
-    ax.set_xlabel('X Label')
-    #ax.set_xlim([-0.3, 0.3])
-    ax.set_ylabel('Y Label')
-    #ax.set_ylim([-0.3, 0.3])
-    ax.set_zlabel('Z Label')
-    #ax.set_zlim([-0.3, 0.3])
-
-    plt.show()
+    # Inclined Planes Visualization Code
+    while False:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        
+        m = 'o'
+        x = [center_loc[0]]
+        y = [center_loc[1]]
+        z = [center_loc[2]]
+        u = [0]
+        v = [0]
+        w = [0]
+        a = [0]
+        b = [0]
+        c = [0]
+        
+        for p in blade.pose_and_orientation:
+            x += [p["position"][0]]
+            y += [p["position"][1]]
+            z += [p["position"][2]]
+            
+            u += [p["unit"][0]]
+            v += [p["unit"][1]]
+            w += [p["unit"][2]]
+            
+            a += [np.sin([p["euler"][2]])*np.cos([p["euler"][0]])]
+            b += [np.sin([p["euler"][2]])*np.sin([p["euler"][0]])]
+            c += [np.cos([p["euler"][2]])]
+            
+        ax.plot(x, y, z, color='k')
+        ax.scatter(x, y, z)
+        ax.quiver(x, y, z, u, v, w, length=0.1, normalize=True)
+        ax.quiver(x, y, z, a, b, c, length=0.05, normalize=True, color='r')
+        
+        
+        # Limits
+        ax.set_xlabel('X Label')
+        #ax.set_xlim([-0.3, 0.3])
+        ax.set_ylabel('Y Label')
+        #ax.set_ylim([-0.3, 0.3])
+        ax.set_zlabel('Z Label')
+        #ax.set_zlim([-0.3, 0.3])
+        
+        plt.show()
 
 
 if __name__ == "__main__":
