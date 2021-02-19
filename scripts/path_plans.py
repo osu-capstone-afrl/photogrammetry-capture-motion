@@ -172,7 +172,7 @@ class SteppedRings(DetectedObject):
         self._min_diameter = np.hypot( size[0], size[1] )
 
         # Set number and final height of levels (distribute n levels across height)
-        self._levels = np.linspace(0, size[2], level_count)
+        self._levels = np.linspace(0, size[2], level_count+1)
 
         # Passthru variables
         self._density = density
@@ -187,21 +187,25 @@ class SteppedRings(DetectedObject):
 
         # Generation
         path_result = []
-        for lvl in self._levels:
-            pheta = np.linspace(0, 2*np.pi, self._density, endpoint=False)
-            
+        for lvl in self._levels[1:]:
+
+            # Create Ring
+            pheta = np.linspace(-np.pi, np.pi, self._density, endpoint=False)
             xx = self._min_diameter * np.cos(pheta)
             yy = self._min_diameter * np.sin(pheta)
             zz = np.full_like(pheta, lvl)
 
+            print(self._locator[:-1,3])
+            # Create Transforms
             for x,y,z in zip(xx,yy,zz):
 
                 # Find Orientation. ie rotation matrix
                 # TODO: Hardcode rotation for now before finding normal pointing towards self._locator origin
-                vector = self._direction([x,y,z])
-                rot_matrix = np.identity(3)
+                rot_matrix_vectors = self._find_rot_matrix([x,y,z])
+                rot_matrix = np.matmul(np.identity(3), rot_matrix_vectors)
+                #rot_matrix = np.identity(3)
 
-                # Create transforms list
+                # Generate transforms list
                 path_result.append( self.tf.generateTransMatrix(rot_matrix,[x,y,z]) )
 
         # Shift path body to be framed in context of Global Fixed Frame (0,0,0)
@@ -212,15 +216,47 @@ class SteppedRings(DetectedObject):
         
         return
 
-    def _direction(self, local_point):
+
+    def _find_rot_matrix(self, local_point):
 
         # TODO: Find way to create a rotation matrix or coordinate system from single vector!
         # Find vector_z pointing from point on ring towards locator. Calculate two vectors to form a coordinate system
-        vector_z = np.subtract(local_point, self._locator[:-1,3])
-        vector_y = np.cross(vector_z, self._locator[:-1,3])
-        vector_y = np.cross(vector_y, vector_z)
+        #vector_z = np.subtract(local_point, self._locator[:-1,3])
+        #vector_y = np.cross(vector_z, self._locator[:-1,3])
+        #vector_x = np.cross(vector_y, vector_z)
 
-        return rotation_matrix
+        # World Frame (ignoring translation)
+        vect_og = np.subtract(self._locator[:-1,3], local_point)
+        uvect_og = vect_og / np.linalg.norm(vect_og)
+        print(local_point)
+        print(uvect_og)
+
+        # New Tool Frame
+        uvect_z = np.array([0,0,1])
+
+        ## Find Rot Matrix Conversion from World to Tool frame
+        # Method Based on https://math.stackexchange.com/a/897677
+        # Solving Equation.. rot_matrix = F^-1 * G * F
+        # All numpy.linalg.norm()'s are set to use L-2 norm. NOT Frobenius norm.
+        a = uvect_og
+        b = uvect_z
+        G = np.array( [[ np.dot(a,b),                     -np.linalg.norm(np.cross(a,b),2), 0],
+                      [ np.linalg.norm(np.cross(a,b),2),   np.dot(a,b),                     0],
+                      [ 0,                                 0,                               1]] )
+        F = np.transpose( np.stack( [  a, (b-np.dot(a,b)*a)/np.linalg.norm(b-np.dot(a,b)*a,2), np.cross(b,a)]) )
+
+        rot_matrix = np.matmul( np.matmul( F, G), np.linalg.inv(F))
+        #print(rot_matrix)
+
+        ## Checks / Debug
+        # LP: length-preserving. Success if "1"
+        # ACR: confirm sucessfully rotates A onto B. Success if "0"
+        #check_LP  = np.linalg.norm(rot_matrix,2)
+        #check_ACR = np.linalg.norm(b-np.matmul(rot_matrix,a),2)
+        #print("|....LP.....|....ACR....|")
+        #print("|  "+str(check_LP)+"  |  "+str(check_ACR)+"  |")
+
+        return rot_matrix
 
 
 ''' TESTING AND VISUALIZATION BELOW '''
@@ -228,8 +264,8 @@ class SteppedRings(DetectedObject):
 
 def main():
     """For testing code and visualizing the points"""
-    dimensions = [0.14, 0.06, 0.04]
-    center_loc = [1, 2, 3]
+    dimensions = [0.2, 0.2, 0.2]
+    center_loc = [0.5, 0, 0]
     twist_angle = 30
 
     blade = InclinedPlane(dimensions,

@@ -114,11 +114,21 @@ class transformations:
       Qyy = point[1,1]
       Qzz = point[2,2]
 
+      ##TODO: Fix (invalid value warning) so copysign quant calculation handles imaginary values (or only uses real?)
+      #print(Qxx, Qyy, Qzz)
+      #print(np.real(np.sqrt(1 - Qxx - Qyy + Qzz)))
+
       # Quant Calculation
-      qx = np.copysign(0.5 * np.sqrt(1 + Qxx - Qyy - Qzz), point[2,1]-point[1,2])
-      qy = np.copysign(0.5 * np.sqrt(1 - Qxx + Qyy - Qzz), point[0,2]-point[2,0])
-      qz = np.copysign(0.5 * np.sqrt(1 - Qxx - Qyy + Qzz), point[1,0]-point[0,1])
+      # Using np.lib.scimath.sqrt in lieu of np.sqrt as it returns imaginary components vs NaN
+      # np.absolute used to get magnitude of combined real + imaginary components 
+      qx = np.copysign(np.absolute(0.5 * np.lib.scimath.sqrt(1 + Qxx - Qyy - Qzz)), point[2,1]-point[1,2])
+      qy = np.copysign(np.absolute(0.5 * np.lib.scimath.sqrt(1 - Qxx + Qyy - Qzz)), point[0,2]-point[2,0])
+      qz = np.copysign(np.absolute(0.5 * np.lib.scimath.sqrt(1 - Qxx - Qyy + Qzz)), point[1,0]-point[0,1])
       qw = 0.5*r
+
+      if np.isnan(qx): qx = 0
+      if np.isnan(qy): qy = 0
+      if np.isnan(qz): qz = 0
 
       path_poses.append( [x, y, z, qx,qy,qz, qw] )
 
