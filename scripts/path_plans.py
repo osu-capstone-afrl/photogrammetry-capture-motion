@@ -228,25 +228,58 @@ class SteppedRings(DetectedObject):
         # World Frame (ignoring translation)
         vect_og = np.subtract(self._locator[:-1,3], local_point)
         uvect_og = vect_og / np.linalg.norm(vect_og)
-        print(local_point)
-        print(uvect_og)
+        #print(local_point)
+        #print(uvect_og)
 
         # New Tool Frame
         uvect_z = np.array([0,0,1])
 
+
+        ######### New Method
+        #beta_y  = np.arctan2(np.sqrt(unit[0]**2 + unit[1]**2), unit[2])  # between z-axis and unit
+        #alpha_x = np.arctan2(unit[1], unit[0])  # between x-axis and unit
+        #gamma_z = np.arctan2(0,unit[2])
+
+
+
+
+#########################################
         ## Find Rot Matrix Conversion from World to Tool frame
-        # Method Based on https://math.stackexchange.com/a/897677
+
+        a = uvect_og    # point to center
+        b = uvect_z     # unit z vector
+
+        w = np.cross(a,b)
+
+        ###################
+        ## METHOD
+        ## Axis-Angle Rotation Method from Textbook. Ref. "Modern Robotics" Section 3.2 Pg 72 OR Eqn 3.52 
+        # http://hades.mech.northwestern.edu/images/2/25/MR-v2.pdf#equation.3.52
+    #    c = np.dot(a,b)                      # cos(pheta)
+    #    s = np.linalg.norm(np.cross(a,b),2)  # sin(pheta)
+
+    #    R = np.array([[ c+np.square(w[0]) * (1-c),      w[0]*w[1]*(1-c)-w[2]*s,         w[0]*w[2]*(1-c)+w[1]*s   ],
+    #                  [ w[0]*w[1]*(1-c)+w[2]*s,         c+np.square(w[1])*(1-c),        w[1]*w[2]*(1-c)-w[0]*s   ],
+    #                  [ w[0]*w[2]*(1-c)-w[1]*s,         w[1]*w[2]*(1-c)+w[0]*s,         c+np.square(w[2])*(1-c)  ]] )        
+        #rot_matrix = R
+
+
+
+        ###################
+        ## METHOD
+        # Based on https://math.stackexchange.com/a/897677
         # Solving Equation.. rot_matrix = F^-1 * G * F
         # All numpy.linalg.norm()'s are set to use L-2 norm. NOT Frobenius norm.
-        a = uvect_og
-        b = uvect_z
+
         G = np.array( [[ np.dot(a,b),                     -np.linalg.norm(np.cross(a,b),2), 0],
                       [ np.linalg.norm(np.cross(a,b),2),   np.dot(a,b),                     0],
                       [ 0,                                 0,                               1]] )
-        F = np.transpose( np.stack( [  a, (b-np.dot(a,b)*a)/np.linalg.norm(b-np.dot(a,b)*a,2), np.cross(b,a)]) )
+       # F = np.transpose( np.stack( [  a, (b-np.dot(a,b)*a)/np.linalg.norm(b-np.dot(a,b)*a,2), np.cross(b,a)]) )
+        F = np.linalg.inv( np.stack( [  a, (b-np.dot(a,b)*a)/np.linalg.norm(b-np.dot(a,b)*a,2), np.cross(b,a)]) )
+        print(F)
 
         rot_matrix = np.matmul( np.matmul( F, G), np.linalg.inv(F))
-        #print(rot_matrix)
+
 
         ## Checks / Debug
         # LP: length-preserving. Success if "1"
