@@ -102,8 +102,8 @@ def main():
 
     # Example detected object definition
     # copied from motion_inclined_plane.py.. duplicate
-    object_size = [0.1, 0.1, 0.2]
-    object_posn = [0.50, 0.0, 0]
+    object_size = [0.1, 0.2, 0.5]
+    object_posn = [0.0, 0.0, 0]
     rot_z = 0
     #demo_blade = InclinedPlane(object_size, object_posn, rot_z)
     from path_plans import DetectedObject
@@ -112,7 +112,7 @@ def main():
     demo_blade = SteppedRings(object_size, object_posn, np.identity(3), level_count=1, density=4)
 
     # Generate PoseArray for ROS Node Publisher
-    pose_geom = [rosmsg_geoPose([0.5,0,0,0,0,0])]
+    pose_geom = [rosmsg_geoPose([0,0,0,0,0,0])]
     for i in demo_blade._path_pose:
         pose_geom.append(rosmsg_geoPose(i))
 

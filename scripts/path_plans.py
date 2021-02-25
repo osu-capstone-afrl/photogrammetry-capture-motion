@@ -152,6 +152,7 @@ class SteppedRings(DetectedObject):
     """
     Path Plan generator for the Stepped Rings Shape
     Relies on numpy (np)
+    Usage: call internal variables _path_tf or _path_pose
 
     :param size:        list[x,y,z] dimensions of presented part
     :param center:      center of presented part in world frame coordinates
@@ -187,7 +188,7 @@ class SteppedRings(DetectedObject):
 
         # Generation
         path_result = []
-        for lvl in self._levels[1:]:
+        for lvl in self._levels[0:]:
 
             ## DEBUG
             print("================================================== LEVEL #: " + str(lvl))
@@ -202,9 +203,8 @@ class SteppedRings(DetectedObject):
             for x,y,z in zip(xx,yy,zz):
 
                 # Find Orientation. ie rotation matrix
-                # TODO: Hardcode rotation for now before finding normal pointing towards self._locator origin
-                rot_matrix = self._find_rot_matrix([x,y,z])
-                #rot_matrix = np.matmul(np.identity(3), rot_matrix_vectors)
+                rot_matrix_vectors = self._find_rot_matrix([x,y,z])
+                rot_matrix = np.matmul(np.identity(3), rot_matrix_vectors)
                 #rot_matrix = np.identity(3)
 
                 # Generate transforms list
@@ -220,18 +220,19 @@ class SteppedRings(DetectedObject):
 
 
     def _find_rot_matrix(self, local_point):
+        """
+            Calculate and return rotation matrix to orient the resultant Z-axis along a vector
+            between a input camera position (local_point) and the central part location.
+
+            :param local_point: (list) Input Camera Position in cartesian coordinates [X,Y,Z]
+            :return rot_matrix: Rotation Matrix as 3x3 Numpy Matrix 
+        """
+
 
         # DEBUG
         print("-------- NEW ANGLE-----------------------")
 
-        # TODO: Find way to create a rotation matrix or coordinate system from single vector!
-        # Find vector_z pointing from point on ring towards locator. Calculate two vectors to form a coordinate system
-        #vector_z = np.subtract(local_point, self._locator[:-1,3])
-        #vector_y = np.cross(vector_z, self._locator[:-1,3])
-        #vector_x = np.cross(vector_y, vector_z)
-
         # World Frame (ignoring translation)
-#        vect_og = np.subtract(self._locator[:-1,3], local_point)
         vect_og = np.subtract([0,0,0], local_point)
         uvect_og = vect_og / np.linalg.norm(vect_og)
 
@@ -242,21 +243,12 @@ class SteppedRings(DetectedObject):
         uvect_z = np.array([0,0,1])
 
 
-        ######### New Method
-        #beta_y  = np.arctan2(np.sqrt(unit[0]**2 + unit[1]**2), unit[2])  # between z-axis and unit
-        #alpha_x = np.arctan2(unit[1], unit[0])  # between x-axis and unit
-        #gamma_z = np.arctan2(0,unit[2])
-
-
-
-
-#########################################
+        ###################
         ## Find Rot Matrix Conversion from World to Tool frame
 
         # Find ROT_MATRIX necessary to rotation vector 'a' onto 'b'
         a = uvect_z     # unit z vector
         b = uvect_og    # point to center
-
 
 
         ###################
@@ -276,13 +268,11 @@ class SteppedRings(DetectedObject):
             rot_matrix = R
 
 
-
         ###################
         ## METHOD 2
         # Based on https://math.stackexchange.com/a/897677
         # Solving Equation.. rot_matrix = F^-1 * G * F
         # All numpy.linalg.norm()'s are set to use L-2 norm. NOT Frobenius norm.
-
         if False:
             G = np.array( [[ np.dot(a,b),                     -np.linalg.norm(np.cross(a,b),2), 0],
                           [ np.linalg.norm(np.cross(a,b),2),   np.dot(a,b),                     0],
@@ -302,16 +292,19 @@ class SteppedRings(DetectedObject):
             c = np.dot(a,b)                      # cos(pheta)
             s = np.linalg.norm(np.cross(a,b),2)  # sin(pheta)
 
+            #DEBUG: Output cos & sin values to determine if quantrant issues.
+            print('cos:',np.around(c,3))
+            print('sin:',np.around(s,3))
+
             v_x = np.array( [[ 0,      -v[2],   v[1] ],
                              [ v[2],    0,     -v[0] ],
                              [-v[1],    v[0],   0    ]] )
             rot_matrix = np.identity(3) + v_x + np.dot(v_x,v_x) * (1/(1+c))
 
-
+            print(np.around(rot_matrix,3))
 
 
         ################ Method 4. Manual Rotation ####################
-
         if False:
             #TODO: Does this projection make sense??
             vect_og2 = np.array( [ uvect_og[0], uvect_og[1], 0 ] )
@@ -342,25 +335,26 @@ class SteppedRings(DetectedObject):
         ##############################################################
 
         # DEBUG
-
-        print("Locator: ", self._locator[:-1,3])
-        print("Local Point: ", np.around(local_point,2))
-        print("Unit Vector of Interest: ", np.around(uvect_og,2))
-        #print("Rotation Vector: ", v)
-        #print("Skew Sym Cross-Product: ", v_x)
-        #print(np.dot(v_x,v_x))
-        print("Rot Matrix:",np.around(rot_matrix,2))
-        #print((1/(1+c)))
+        if False:
+            print("Locator: ", self._locator[:-1,3])
+            print("Local Point: ", np.around(local_point,2))
+            print("Unit Vector of Interest: ", np.around(uvect_og,2))
+            #print("Rotation Vector: ", v)
+            #print("Skew Sym Cross-Product: ", v_x)
+            #print(np.dot(v_x,v_x))
+            print("Rot Matrix:",np.around(rot_matrix,2))
+            #print((1/(1+c)))
 
 
         ###################
         ## Checks / Debug
         # LP: length-preserving. Success if "1"
         # ACR: confirm sucessfully rotates A onto B. Success if "0"
-        #check_LP  = np.linalg.norm(rot_matrix,2)
-        #check_ACR = np.linalg.norm(b-np.matmul(rot_matrix,a),2)
-        #print("|....LP.....|....ACR....|")
-        #print("|  "+str(check_LP)+"  |  "+str(check_ACR)+"  |")
+        if False:
+            check_LP  = np.linalg.norm(rot_matrix,2)
+            check_ACR = np.linalg.norm(b-np.matmul(rot_matrix,a),2)
+            print("|....LP.....|....ACR....|")
+            print("|  "+str(check_LP)+"  |  "+str(check_ACR)+"  |")
 
         return rot_matrix
 
@@ -370,24 +364,29 @@ class SteppedRings(DetectedObject):
 
 def main():
     """For testing code and visualizing the points"""
+    print("--- DEMO CODE: Must enable method (InclinedPlane, SteppedRings ----\n")
+
+    # Collision Box Size, Location, Angle
     dimensions = [0.2, 0.2, 0.2]
     center_loc = [0.5, 0, 0]
     twist_angle = 30
 
-    blade = InclinedPlane(dimensions,
-                          center_loc,
-                          twist_angle,
-                          offset=0.25)
+    # Stepped Rings Visualization Demo
+    if False:
+        print("......Method: SteppedRings ")
+        demo_rings = SteppedRings(dimensions,center_loc, np.identity(3))
 
+        from visualizations import plot_path_transforms
+        plot_path_transforms(demo_rings._path_tf)
 
-    demo_rings = SteppedRings(dimensions,center_loc, np.identity(3))
+    # Inclined Planes Visualization Demo
+    if False:
+        print("......Method: InclinedPlane ")
+        blade = InclinedPlane(dimensions,
+                      center_loc,
+                      twist_angle,
+                      offset=0.25)
 
-    from visualizations import plot_path_transforms
-    plot_path_transforms(demo_rings._path_tf)
-
-
-    # Inclined Planes Visualization Code
-    while False:
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         
