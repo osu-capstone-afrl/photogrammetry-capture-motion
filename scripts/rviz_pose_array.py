@@ -109,7 +109,7 @@ def main():
     from path_plans import DetectedObject
     from path_plans import SteppedRings
     import numpy as np
-    demo_blade = SteppedRings(object_size, object_posn, np.identity(3), level_count=2)
+    demo_blade = SteppedRings(object_size, object_posn, np.identity(3), level_count=1, density=4)
 
     # Generate PoseArray for ROS Node Publisher
     pose_geom = [rosmsg_geoPose([0.5,0,0,0,0,0])]

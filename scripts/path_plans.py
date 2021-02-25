@@ -189,20 +189,22 @@ class SteppedRings(DetectedObject):
         path_result = []
         for lvl in self._levels[1:]:
 
+            ## DEBUG
+            print("================================================== LEVEL #: " + str(lvl))
+
             # Create Ring
             pheta = np.linspace(-np.pi, np.pi, self._density, endpoint=False)
-            xx = self._min_diameter * np.cos(pheta)
-            yy = self._min_diameter * np.sin(pheta)
-            zz = np.full_like(pheta, lvl)
+            xx = (self._min_diameter * np.cos(pheta))
+            yy = (self._min_diameter * np.sin(pheta))
+            zz = (np.full_like(pheta, lvl))
 
-            print(self._locator[:-1,3])
             # Create Transforms
             for x,y,z in zip(xx,yy,zz):
 
                 # Find Orientation. ie rotation matrix
                 # TODO: Hardcode rotation for now before finding normal pointing towards self._locator origin
-                rot_matrix_vectors = self._find_rot_matrix([x,y,z])
-                rot_matrix = np.matmul(np.identity(3), rot_matrix_vectors)
+                rot_matrix = self._find_rot_matrix([x,y,z])
+                #rot_matrix = np.matmul(np.identity(3), rot_matrix_vectors)
                 #rot_matrix = np.identity(3)
 
                 # Generate transforms list
@@ -219,6 +221,9 @@ class SteppedRings(DetectedObject):
 
     def _find_rot_matrix(self, local_point):
 
+        # DEBUG
+        print("-------- NEW ANGLE-----------------------")
+
         # TODO: Find way to create a rotation matrix or coordinate system from single vector!
         # Find vector_z pointing from point on ring towards locator. Calculate two vectors to form a coordinate system
         #vector_z = np.subtract(local_point, self._locator[:-1,3])
@@ -226,10 +231,12 @@ class SteppedRings(DetectedObject):
         #vector_x = np.cross(vector_y, vector_z)
 
         # World Frame (ignoring translation)
-        vect_og = np.subtract(self._locator[:-1,3], local_point)
+#        vect_og = np.subtract(self._locator[:-1,3], local_point)
+        vect_og = np.subtract([0,0,0], local_point)
         uvect_og = vect_og / np.linalg.norm(vect_og)
-        #print(local_point)
-        #print(uvect_og)
+
+        print('Vector',np.around(vect_og,2))
+        print('Unit Vector',np.around(uvect_og,2))
 
         # New Tool Frame
         uvect_z = np.array([0,0,1])
@@ -246,41 +253,107 @@ class SteppedRings(DetectedObject):
 #########################################
         ## Find Rot Matrix Conversion from World to Tool frame
 
-        a = uvect_og    # point to center
-        b = uvect_z     # unit z vector
+        # Find ROT_MATRIX necessary to rotation vector 'a' onto 'b'
+        a = uvect_z     # unit z vector
+        b = uvect_og    # point to center
 
-        w = np.cross(a,b)
+
 
         ###################
-        ## METHOD
+        ## METHOD 1
         ## Axis-Angle Rotation Method from Textbook. Ref. "Modern Robotics" Section 3.2 Pg 72 OR Eqn 3.52 
         # http://hades.mech.northwestern.edu/images/2/25/MR-v2.pdf#equation.3.52
-    #    c = np.dot(a,b)                      # cos(pheta)
-    #    s = np.linalg.norm(np.cross(a,b),2)  # sin(pheta)
 
-    #    R = np.array([[ c+np.square(w[0]) * (1-c),      w[0]*w[1]*(1-c)-w[2]*s,         w[0]*w[2]*(1-c)+w[1]*s   ],
-    #                  [ w[0]*w[1]*(1-c)+w[2]*s,         c+np.square(w[1])*(1-c),        w[1]*w[2]*(1-c)-w[0]*s   ],
-    #                  [ w[0]*w[2]*(1-c)-w[1]*s,         w[1]*w[2]*(1-c)+w[0]*s,         c+np.square(w[2])*(1-c)  ]] )        
-        #rot_matrix = R
+        # Trash. Do Not use.
+        if False:
+            w = np.cross(a,b)
+            c = np.dot(a,b)                      # cos(pheta)
+            s = np.linalg.norm(np.cross(a,b),2)  # sin(pheta)
+
+            R = np.array([[ c+np.square(w[0]) * (1-c),      w[0]*w[1]*(1-c)-w[2]*s,         w[0]*w[2]*(1-c)+w[1]*s   ],
+                          [ w[0]*w[1]*(1-c)+w[2]*s,         c+np.square(w[1])*(1-c),        w[1]*w[2]*(1-c)-w[0]*s   ],
+                          [ w[0]*w[2]*(1-c)-w[1]*s,         w[1]*w[2]*(1-c)+w[0]*s,         c+np.square(w[2])*(1-c)  ]] )        
+            rot_matrix = R
 
 
 
         ###################
-        ## METHOD
+        ## METHOD 2
         # Based on https://math.stackexchange.com/a/897677
         # Solving Equation.. rot_matrix = F^-1 * G * F
         # All numpy.linalg.norm()'s are set to use L-2 norm. NOT Frobenius norm.
 
-        G = np.array( [[ np.dot(a,b),                     -np.linalg.norm(np.cross(a,b),2), 0],
-                      [ np.linalg.norm(np.cross(a,b),2),   np.dot(a,b),                     0],
-                      [ 0,                                 0,                               1]] )
-       # F = np.transpose( np.stack( [  a, (b-np.dot(a,b)*a)/np.linalg.norm(b-np.dot(a,b)*a,2), np.cross(b,a)]) )
-        F = np.linalg.inv( np.stack( [  a, (b-np.dot(a,b)*a)/np.linalg.norm(b-np.dot(a,b)*a,2), np.cross(b,a)]) )
-        print(F)
+        if False:
+            G = np.array( [[ np.dot(a,b),                     -np.linalg.norm(np.cross(a,b),2), 0],
+                          [ np.linalg.norm(np.cross(a,b),2),   np.dot(a,b),                     0],
+                          [ 0,                                 0,                               1]] )
 
-        rot_matrix = np.matmul( np.matmul( F, G), np.linalg.inv(F))
+            F = np.linalg.inv( np.stack( [  a, (b-np.dot(a,b)*a)/np.linalg.norm(b-np.dot(a,b)*a,2), np.cross(b,a)]) )
+
+            rot_matrix = np.matmul( np.matmul( F, G), np.linalg.inv(F))
 
 
+        ###################
+        ## METHOD 3
+        # Based on https://math.stackexchange.com/a/476311
+        if True:
+            v = np.cross(a,b)
+
+            c = np.dot(a,b)                      # cos(pheta)
+            s = np.linalg.norm(np.cross(a,b),2)  # sin(pheta)
+
+            v_x = np.array( [[ 0,      -v[2],   v[1] ],
+                             [ v[2],    0,     -v[0] ],
+                             [-v[1],    v[0],   0    ]] )
+            rot_matrix = np.identity(3) + v_x + np.dot(v_x,v_x) * (1/(1+c))
+
+
+
+
+        ################ Method 4. Manual Rotation ####################
+
+        if False:
+            #TODO: Does this projection make sense??
+            vect_og2 = np.array( [ uvect_og[0], uvect_og[1], 0 ] )
+
+            pheta_prime_z = np.arctan2(vect_og[1],vect_og[0])
+            phi_prime_y = np.arccos( (np.dot(vect_og,vect_og2) ) / (np.linalg.norm(vect_og,2)*np.linalg.norm(vect_og2,2))  )
+
+
+            ## Generate Rotation Matrices
+            s = np.sin(pheta_prime_z)
+            c = np.cos(pheta_prime_z)
+
+            rot_z = np.matrix([ [ c, -s, 0],
+                                [ s,  c, 0],
+                                [ 0,  0, 1] ])
+
+            s = np.sin(phi_prime_y)
+            c = np.cos(phi_prime_y)
+
+            rot_y = np.matrix([ [ c, 0, s],
+                                [ 0, 1, 0],
+                                [-s, 0, c] ])
+
+            # Rotation Matrix (Rotation w.r.t fixed frame)(pre-multiply)
+            rot_matrix = np.matmul(rot_z,rot_y)
+
+
+        ##############################################################
+
+        # DEBUG
+
+        print("Locator: ", self._locator[:-1,3])
+        print("Local Point: ", np.around(local_point,2))
+        print("Unit Vector of Interest: ", np.around(uvect_og,2))
+        #print("Rotation Vector: ", v)
+        #print("Skew Sym Cross-Product: ", v_x)
+        #print(np.dot(v_x,v_x))
+        print("Rot Matrix:",np.around(rot_matrix,2))
+        #print((1/(1+c)))
+
+
+        ###################
         ## Checks / Debug
         # LP: length-preserving. Success if "1"
         # ACR: confirm sucessfully rotates A onto B. Success if "0"
