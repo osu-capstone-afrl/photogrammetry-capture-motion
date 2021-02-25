@@ -10,8 +10,8 @@
 ## IMPORTS ##
 import rospy
 
-from backend import DetectedObject
-from backend import InclinedPlane
+from path_plans import DetectedObject
+from path_plans import InclinedPlane
 
 import geometry_msgs.msg
 
@@ -35,7 +35,7 @@ def rosmsg_geoPose(pose):
     # http://docs.ros.org/en/api/geometry_msgs/html/msg/Quaternion.html
 
     if isinstance(pose,dict):
-        q_orientGoal = quaternion_from_euler(pose['quaternion'][0],pose['quaternion'][1],pose['quaternion'][2],axes='sxyz')
+        q_orientGoal = quaternion_from_euler(pose['euler'][0],pose['euler'][1],pose['euler'][2],axes='sxyz')
 
         pose_goal = geometry_msgs.msg.Pose()
         pose_goal.position.x = pose['position'][0]
@@ -102,14 +102,18 @@ def main():
 
     # Example detected object definition
     # copied from motion_inclined_plane.py.. duplicate
-    object_size = [0.14, 0.06, 0.04]
-    object_posn = [0.50, 0.0, 0.4]
+    object_size = [0.1, 0.2, 0.5]
+    object_posn = [0.0, 0.0, 0]
     rot_z = 0
-    demo_blade = InclinedPlane(object_size, object_posn, rot_z)
+    #demo_blade = InclinedPlane(object_size, object_posn, rot_z)
+    from path_plans import DetectedObject
+    from path_plans import SteppedRings
+    import numpy as np
+    demo_blade = SteppedRings(object_size, object_posn, np.identity(3), level_count=1, density=4)
 
     # Generate PoseArray for ROS Node Publisher
-    pose_geom = []
-    for i in demo_blade.get_positions():
+    pose_geom = [rosmsg_geoPose([0,0,0,0,0,0])]
+    for i in demo_blade._path_pose:
         pose_geom.append(rosmsg_geoPose(i))
 
 

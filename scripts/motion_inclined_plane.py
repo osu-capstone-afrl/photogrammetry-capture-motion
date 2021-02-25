@@ -38,8 +38,8 @@ from motoman_msgs.srv import ReadSingleIO, WriteSingleIO
 import time
 
 # Capstone specific imports
-from backend import DetectedObject
-from backend import InclinedPlane
+from path_plans import DetectedObject
+from path_plans import InclinedPlane
 
 ## Quaternion Tools
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
@@ -190,7 +190,7 @@ class moveManipulator(object):
         # http://docs.ros.org/en/api/geometry_msgs/html/msg/Quaternion.html
 
         if isinstance(pose,dict):
-            q_orientGoal = quaternion_from_euler(pose['quaternion'][0],pose['quaternion'][1],pose['quaternion'][2],axes='sxyz')
+            q_orientGoal = quaternion_from_euler(pose['euler'][0],pose['euler'][1],pose['euler'][2],axes='sxyz')
 
             pose_goal = geometry_msgs.msg.Pose()
             pose_goal.position.x = pose['position'][0]
@@ -201,7 +201,7 @@ class moveManipulator(object):
             #pose_goal.orientation.z = pose['quaternion'][2]
             #pose_goal.orientation.w = pose['quaternion'][3]
 
-            #Temp fix before converting eulers
+            # Reorganize Data into Output Format
             pose_goal.orientation.x = q_orientGoal[0]
             pose_goal.orientation.y = q_orientGoal[1]
             pose_goal.orientation.z = q_orientGoal[2]
@@ -377,12 +377,8 @@ def main():
         rot_z = 0
         demo_blade = InclinedPlane(object_size, object_posn, rot_z)
 
-
-
         # Add Object to Collision Planning Space
         robot.add_box_object(object_posn, object_size)
-
-
 
         ## MOTION EXECUTION ## 
         #~~ Check Current Pose
@@ -390,20 +386,18 @@ def main():
 
         # Attempt Incline Plane Motion
         print("\nEXECUTE INCLINED PLANES RASTER MOTION")
-        poseList = demo_blade.get_positions()
-
         radius = 0.005
 
         try:
-            for msg in poseList:  #Debugging. Only doing first 5 poses poseList[0:5]
+            for msg in demo_blade.pose_and_orientation:  #Debugging. Only doing first 5 poses poseList[0:5]
                 print(msg)
-                #robot.add_sphere_object(msg["position"], radius)
+                # todo: @Adam to make updates this loop and verify that it pulls the position
+                # todo: and orientation properly
+                # robot.add_sphere_object(msg["position"], radius)
                 robot.goto_Quant_Orient(msg)
                 time.sleep(0.2)
         except KeyboardInterrupt:
             return
-
-
 
         ## CLEANUP & CLOSE ##
         # Remove Object
