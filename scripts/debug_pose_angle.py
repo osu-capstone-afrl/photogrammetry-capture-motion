@@ -1,0 +1,128 @@
+#!/usr/bin/env python
+
+#####################################################
+##                DEBUG POSE ANGLE                 ##
+#####################################################
+
+import numpy as np
+import path_plans
+from rviz_pose_array import rosmsg_geoPose
+from rviz_pose_array import node_cameraPoseArray
+
+import rospy
+import geometry_msgs.msg
+
+import time
+from math import trunc
+
+
+
+def _find_rot_matrix(local_point,angle):
+
+    # World Frame (ignoring translation)
+    vect_og = np.subtract([0,0,0], local_point)
+    uvect_og = vect_og / np.linalg.norm(vect_og)
+
+    # New Tool Frame
+    uvect_z = np.array([0,0,-1])
+
+    ###################
+    ## METHOD 3
+    # Based on https://math.stackexchange.com/a/476311
+    if True:
+        # Find ROT_MATRIX necessary to rotation vector 'a' onto 'b'
+        a = uvect_z     # unit z vector
+        b = uvect_og    # point to center
+
+        v = np.cross(a,b)
+        #print('Rotate about v:',np.around(v,3))
+
+        #c = np.dot(a,b)                      # cos(pheta)
+        #s = np.linalg.norm(np.cross(a,b),2)  # sin(pheta)
+        c = np.cos(angle)
+        s = np.sin(angle)
+
+        #DEBUG: Output cos & sin values to determine if quantrant issues.
+        #print('cos:',np.around(c,3))
+        #print('sin:',np.around(s,3))
+
+        v_x = np.array( [[ 0,      -v[2],   v[1] ],
+                         [ v[2],    0,     -v[0] ],
+                         [-v[1],    v[0],   0    ]] )
+        rot_matrix = np.identity(3) + v_x + np.dot(v_x,v_x) * (1/(1+c))
+
+    return rot_matrix
+
+
+## MAIN CODE ##
+def main():
+
+    from transformations import transformations
+    tf = transformations()
+
+    # Center Part "_locator"
+    fixed_posn = [0, 0, 0]
+    fixed_rot  = np.identity(3)
+    fixed_pose = tf.generateTransMatrix(fixed_rot,fixed_posn)
+
+    # Set Camera Cartesian Point
+    x = -0.25
+    y = 0
+    z = 0
+
+    angles = np.linspace(-179,179,359)
+
+    try:
+        # Imports
+        import rospy
+        from geometry_msgs.msg import PoseArray
+
+        # Config node
+        pub = rospy.Publisher('cameraPoseArray', PoseArray, queue_size=10) #TODO: couldn't get latch=True to work. Looping instead
+        rospy.init_node('cameraPoseArray', anonymous=False)
+        rate = rospy.Rate(1) # 10hz
+
+        # First Message
+        pose_geom = [rosmsg_geoPose([0,0,0,0,0,0])]
+        message = geometry_msgs.msg.PoseArray()
+        message.header.frame_id = 'base_link'
+        message.poses = pose_geom
+        
+        # Publish node
+        pub.publish(message)
+        rate.sleep()
+
+        # Loop Through Angles
+        for ph in angles:
+            print('........................Angle Input to Shown Pose:' + str(ph))
+
+            # Create Local Point's Transform Matrix
+            local_rot_matrix = _find_rot_matrix([x,y,z],ph)
+            local_transform = tf.generateTransMatrix(local_rot_matrix,[x,y,z])
+
+            # Convert to Fixed Frame (doesn't really do anything since already at origin)
+            fixed_transform = np.matmul(local_transform,fixed_pose)
+            print(np.around(fixed_transform,3))
+
+            # Convert path to Robot Poses (outputs a list of vectors x,y,z,qx,qy,qz,qw)
+            _path_pose = tf.convertPath2RobotPose([fixed_transform])
+
+            # Add to PoseArray for ROS Node Publisher
+            pose_geom = [rosmsg_geoPose([0,0,0,0,0,0])]
+            for i in _path_pose:
+                pose_geom.append(rosmsg_geoPose(i))
+
+            #print(pose_geom)
+
+            message = geometry_msgs.msg.PoseArray()
+            message.header.frame_id = 'base_link'
+            message.poses = pose_geom
+            pub.publish(message)
+
+            time.sleep(0.07)
+
+    except rospy.ROSInterruptException:
+        pass
+
+if __name__ == '__main__':
+    main()
