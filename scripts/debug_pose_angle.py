@@ -19,12 +19,16 @@ from math import trunc
 
 def _find_rot_matrix(local_point,angle):
 
+    #Convert from Degrees to Radians
+    # deg2rad(x) = angle * pi / 180.
+    angle = np.deg2rad(angle)
+
     # World Frame (ignoring translation)
     vect_og = np.subtract([0,0,0], local_point)
     uvect_og = vect_og / np.linalg.norm(vect_og)
 
     # New Tool Frame
-    uvect_z = np.array([0,0,-1])
+    uvect_z = np.array([0,0,1])
 
     ###################
     ## METHOD 3
@@ -35,11 +39,12 @@ def _find_rot_matrix(local_point,angle):
         b = uvect_og    # point to center
 
         v = np.cross(a,b)
-        #print('Rotate about v:',np.around(v,3))
+        v = v / np.linalg.norm(v,2)
+        print('Rotate about v:',np.around(v,3))
 
         #c = np.dot(a,b)                      # cos(pheta)
         #s = np.linalg.norm(np.cross(a,b),2)  # sin(pheta)
-        c = np.cos(angle)
+        c = np.cos(angle)                     #angle in radians
         s = np.sin(angle)
 
         #DEBUG: Output cos & sin values to determine if quantrant issues.
@@ -49,7 +54,7 @@ def _find_rot_matrix(local_point,angle):
         v_x = np.array( [[ 0,      -v[2],   v[1] ],
                          [ v[2],    0,     -v[0] ],
                          [-v[1],    v[0],   0    ]] )
-        rot_matrix = np.identity(3) + v_x + np.dot(v_x,v_x) * (1/(1+c))
+        rot_matrix = np.identity(3) + s*v_x + (1-c)*np.matmul(v_x,v_x)
 
     return rot_matrix
 
@@ -94,7 +99,7 @@ def main():
 
         # Loop Through Angles
         for ph in angles:
-            print('........................Angle Input to Shown Pose:' + str(ph))
+            print('...............................Angle Input to Shown Pose:' + str(ph))
 
             # Create Local Point's Transform Matrix
             local_rot_matrix = _find_rot_matrix([x,y,z],ph)
@@ -119,7 +124,7 @@ def main():
             message.poses = pose_geom
             pub.publish(message)
 
-            time.sleep(0.07)
+            time.sleep(0.02)
 
     except rospy.ROSInterruptException:
         pass

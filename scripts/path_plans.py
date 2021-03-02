@@ -288,6 +288,7 @@ class SteppedRings(DetectedObject):
         # Based on https://math.stackexchange.com/a/476311
         if True:
             v = np.cross(a,b)
+            v = v / np.linalg.norm(v,2)
 
             c = np.dot(a,b)                      # cos(pheta)
             s = np.linalg.norm(np.cross(a,b),2)  # sin(pheta)
@@ -299,7 +300,7 @@ class SteppedRings(DetectedObject):
             v_x = np.array( [[ 0,      -v[2],   v[1] ],
                              [ v[2],    0,     -v[0] ],
                              [-v[1],    v[0],   0    ]] )
-            rot_matrix = np.identity(3) + v_x + np.dot(v_x,v_x) * (1/(1+c))
+            rot_matrix = np.identity(3) + s*v_x + (1-c)*np.matmul(v_x,v_x)
 
             print(np.around(rot_matrix,3))
 
