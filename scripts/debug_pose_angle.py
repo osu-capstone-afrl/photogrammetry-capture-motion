@@ -76,6 +76,11 @@ def main():
     z = 0
 
     angles = np.linspace(-179,179,359)
+    #angles = [135]
+
+    # Lists for Visualization
+    theta_actual_cos = []
+    theta_actual_sin = []
 
     try:
         # Imports
@@ -109,6 +114,16 @@ def main():
             fixed_transform = np.matmul(local_transform,fixed_pose)
             print(np.around(fixed_transform,3))
 
+            # Check Rotation Matrix
+            print('')
+            theta_c = np.rad2deg( np.arccos(fixed_transform[0][0]) )
+            theta_actual_cos.append(theta_c)
+            print('Theta_c',np.around(theta_c,3) )
+
+            theta_s = np.rad2deg( np.arccos(fixed_transform[0][2]) )
+            theta_actual_sin.append(theta_s)
+            print('Theta_s',np.around(theta_s,3) )
+
             # Convert path to Robot Poses (outputs a list of vectors x,y,z,qx,qy,qz,qw)
             _path_pose = tf.convertPath2RobotPose([fixed_transform])
 
@@ -128,6 +143,35 @@ def main():
 
     except rospy.ROSInterruptException:
         pass
+
+
+    # Plot Array Differences
+    if len(angles)>1:
+        import matplotlib.pyplot as plt
+        x = range(0,len(angles))
+
+        fig, (ax1, ax2) = plt.subplots(1,2)
+
+        fig.suptitle('Rotation Matrix Debugging Analysis\n ')
+
+        ax1.plot(angles,angles,label = 'Theta - Input')
+        ax1.plot(angles,theta_actual_cos,label = 'Theta - Cos derived (cell [0,0])')
+        ax1.plot(angles,theta_actual_sin,label = 'Theta - Sin derived (cell [0,2])')
+        ax1.grid()
+        ax1.legend()
+        ax1.set_xlabel('Input Angle (degrees)')
+        ax1.set_ylabel('Output Angle (degrees)')
+        ax1.set_title('Evaluation of Rotation Matrix (in/out theta values)')
+
+        delta_theta_input2sin = np.subtract( np.array(theta_actual_sin) , np.array(theta_actual_cos) )
+        ax2.plot(angles,delta_theta_input2sin)
+        ax2.grid()
+        ax2.set_xlabel('Input Angle (degrees)')
+        ax2.set_ylabel('Delta (degrees)')
+        ax2.set_title('Differences btwn Cos- & Sin- Angles Derivatives')
+
+        plt.show()
+
 
 if __name__ == '__main__':
     main()
