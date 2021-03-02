@@ -120,7 +120,7 @@ def main():
             theta_actual_cos.append(theta_c)
             print('Theta_c',np.around(theta_c,3) )
 
-            theta_s = np.rad2deg( np.arccos(fixed_transform[0][2]) )
+            theta_s = np.rad2deg( np.arcsin(fixed_transform[0][2]) )
             theta_actual_sin.append(theta_s)
             print('Theta_s',np.around(theta_s,3) )
 
