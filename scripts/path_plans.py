@@ -5,7 +5,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
 
-def _calc_unit_vec_between(vec_a, vec_b): # type: (list[int], list[int]) -> list[int]
+def _calc_unit_vec_between(vec_a, vec_b): # type: (list[float], list[float]) -> list[float]
     """Finds the vector pointing from vec_a to vec_b and scales it to unit length"""
     vec = np.subtract(vec_b, vec_a)
     vec = vec / np.sqrt(np.sum(vec**2))
@@ -19,8 +19,8 @@ class DetectedObject(object):
     # and orientations and will update the self.pose_and_orientation list.  At this point
     # there is no reason to call any member function or access any member variables other
     # than self.pose_and_orientation
-    def _point_method(self, size, center, orientation):
-        # type: (list[int], list[int], int) -> None
+    def _point_method(self, size, center, rotation):
+        # type: (list[float], list[float], float) -> None
         """Initialization function"""
         # Assumes that the size and center arrays are ordered from largest to smallest
         # Assumes that the z dimension is the smallest
@@ -36,7 +36,7 @@ class DetectedObject(object):
         self._x_loc = center[0]  # Double storing the data is not ideal. Refactor in the future
         self._y_loc = center[1]
         self._z_loc = center[2]
-        self._orientation = orientation
+        self._orientation = rotation
 
         self.pose_and_orientation = []
 
@@ -50,10 +50,19 @@ class DetectedObject(object):
 
 class InclinedPlane(DetectedObject):
     """A container for the incline plane path plan"""
-    def __init__(self, size, center, orientation, x_num=5, z_num=5, slope=0.5, offset=0.25):
-        # type: (list[int], list[int], int, int, int, int, int) -> None
-        """Initialization function"""
-        super(InclinedPlane, self)._point_method(size, center, orientation)
+    def __init__(self, size, center, rotation, x_num=5, z_num=5, slope=0.5, offset=0.25):
+        # type: (list[float], list[float], float, int, int, float, float) -> None
+        """Initialization function
+
+        :param size:      list[x,y,z] dimensions of presented part
+        :param center:    center of presented part in world frame coordinates
+        :param rotation:  rotation of presented part in world frame coordinates
+        :param x_num:     number of stepped levels
+        :param z_num:     number of points on a single level. Evenly distributed about the ring
+        :param slope:     factor [0,1] to adjust the tilt of each plane, 0 implies no tilt
+        :param offset:    Adjusts final position away from part along the each planes surface normal
+        """
+        super(InclinedPlane, self)._point_method(size, center, rotation)
         self._x_num = z_num
         self._z_num = z_num
         if 0 <= slope <= 1:
@@ -78,6 +87,7 @@ class InclinedPlane(DetectedObject):
     def _set_up_planes(self):
         # type () -> None
         """Sets up the 4 planes and store points as a List[dict{}] in member variable self.pose_and_orientation """
+
         # Length planes
         # Translate length planes back by length/2
         self._plane_length_1.translate('x', self._x_len / -2)
@@ -151,18 +161,18 @@ class InclinedPlane(DetectedObject):
 class SteppedRings(DetectedObject):
     """
     Path Plan generator for the Stepped Rings Shape
-    Relies on numpy (np)
-    Usage: call internal variables _path_tf or _path_pose
-
-    :param size:        list[x,y,z] dimensions of presented part
-    :param center:      center of presented part in world frame coordinates
-    :param rotation:    rotation of presented part in world frame coordinates
-    :param level_count: number of stepped levels 
-    :param density:     number of points on a single level. Evenly distributed about the ring
     """
 
-
     def __init__(self, size, center, rotation, level_count=5, density=10):
+        """
+        Call internal variables _path_tf or _path_pose
+
+        :param size:        list[x,y,z] dimensions of presented part
+        :param center:      center of presented part in world frame coordinates
+        :param rotation:    rotation of presented part in world frame coordinates
+        :param level_count: number of stepped levels
+        :param density:     number of points on a single level. Evenly distributed about the ring
+        """
 
         # Setup Root Structure
         # rotation frame hard coded to match fixed source frame

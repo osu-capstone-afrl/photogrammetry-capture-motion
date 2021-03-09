@@ -4,7 +4,7 @@ import numpy as np
 class Plane(object):
     """Container for defining a plane by a list of x-by-z equally spaced points"""
     def __init__(self, x_num, z_num, x_len, z_len):
-        # type: (int, int, int, int) -> none
+        # type: (int, int, float, float) -> None
         """Initializes a plane abject as a list of [x,y,z] coordinates"""
         self._x_num = x_num
         self._z_num = z_num
@@ -16,7 +16,7 @@ class Plane(object):
         self.points = self._get_plane_points()
 
     def _get_plane_points(self):
-        # type: () -> list([list[int]])
+        # type: () -> list[[list[float]]]
         """Returns all the points on the plane. Attempts to do this in a path-planning friendly way"""
         ret_list = []  # [[X0, Y0, Z0], [X1, Y1, Z1], ... ]  <- list of lists
         height = 0
@@ -36,7 +36,7 @@ class Plane(object):
         return ret_list
 
     def rotate(self, axis, angle, rad=False):
-        # type: (str, int, bool) -> none
+        # type: (str, float, bool) -> None
         """Rotates points in a plane around a specific global axis by the specified angle"""
         if axis not in ['x', 'X', 'y', 'Y', 'z', 'Z']:
             print "[WARN] Invalid axis in Plane.rotate(), original list was not changed"
@@ -68,7 +68,7 @@ class Plane(object):
         return
 
     def translate(self, axis, dist):
-        # type: (str, int) -> None
+        # type: (str, float) -> None
         """Translates points in a plane around a specified global axis by the specified distance"""
         if axis not in ['x', 'X', 'y', 'Y', 'z', 'Z', 'n', 'N']:
             print "[WARN] Invalid axis in Plane.translate(), original list was not changed"
@@ -92,7 +92,7 @@ class Plane(object):
         return
 
     def get_surf_norm(self):
-        # type: () -> list[int]
+        # type: () -> list[float]
         """Returns the normal vector to the plane, scaled to unit length"""
         # todo: check if the directions are consistent with what we expect
         a = np.subtract(self.points[0], self.points[1])
