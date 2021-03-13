@@ -107,7 +107,10 @@ The following table briefly summarizes the contents of this directory:
 | [`motion_inclined_plane.py`](https://github.com/osu-capstone-afrl/photogrammetry-capture-motion/blob/melodic/scripts/motion_inclined_plane.py) | Demonstration of code                                        |
 | [`path_plans.py`](https://github.com/osu-capstone-afrl/photogrammetry-capture-motion/blob/melodic/scripts/path_plans.py) | Contains all path plans                                      |
 | [`shapes.py`](https://github.com/osu-capstone-afrl/photogrammetry-capture-motion/blob/melodic/scripts/shapes.py) | Defines basic geometries (e.g., planes) which path plans are built from |
-| [`transformations.py`](https://github.com/osu-capstone-afrl/photogrammetry-capture-motion/blob/melodic/scripts/transformations.py) | Used for translating and rotation reference frames           |
+|  |  |
+| [`transformations.py`](https://github.com/osu-capstone-afrl/photogrammetry-capture-motion/blob/melodic/scripts/transformations.py) | Tool Class for creating, manipulating, and converting Homogeneous Transformation Matrixes (and list's thereof)     |
+| [`visualizations.py`](https://github.com/osu-capstone-afrl/photogrammetry-capture-motion/blob/melodic/scripts/visualizations.py) | 3D Plots of Generated Paths using list of H.Transforms. Powered by MatPlotLib.
+| [`rviz_pose_array.py`](https://github.com/osu-capstone-afrl/photogrammetry-capture-motion/blob/melodic/scripts/rviz_pose_array.py) | ROS Node for publishing a 'pose array' object. Array composed of all frames in generated path.
 
 Any unlisted files are safe for users to ignore. They are likely left over testing or debugging code that should be removed eventually. 
 
