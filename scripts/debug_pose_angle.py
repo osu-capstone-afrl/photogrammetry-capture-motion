@@ -17,14 +17,14 @@ from math import trunc
 
 
 
-def _find_rot_matrix(local_point,angle):
+def _find_rot_matrix(local_point,fixed_origin,angle):
 
     #Convert from Degrees to Radians
     # deg2rad(x) = angle * pi / 180.
     angle = np.deg2rad(angle)
 
     # World Frame (ignoring translation)
-    vect_og = np.subtract([0,0,0], local_point)
+    vect_og = np.subtract(fixed_origin, local_point)
     uvect_og = vect_og / np.linalg.norm(vect_og)
 
     # New Tool Frame
@@ -48,13 +48,18 @@ def _find_rot_matrix(local_point,angle):
         s = np.sin(angle)
 
         #DEBUG: Output cos & sin values to determine if quantrant issues.
-        #print('cos:',np.around(c,3))
-        #print('sin:',np.around(s,3))
+        print('cos:',np.around(c,3))
+        print('sin:',np.around(s,3))
 
         v_x = np.array( [[ 0,      -v[2],   v[1] ],
                          [ v[2],    0,     -v[0] ],
                          [-v[1],    v[0],   0    ]] )
-        rot_matrix = np.identity(3) + s*v_x + (1-c)*np.matmul(v_x,v_x)
+
+        v_tensor = np.array([[v[0] ** 2, v[0] * v[1], v[0] * v[2]],
+                             [v[0] * v[1], v[1] ** 2, v[1] * v[2]],
+                             [v[0] * v[2], v[1] * v[2], v[2] ** 2]])
+        
+        rot_matrix = c*np.identity(3) + s*v_x + (1-c)*v_tensor
 
     return rot_matrix
 
@@ -73,7 +78,7 @@ def main():
     # Set Camera Cartesian Point
     x = -0.25
     y = 0
-    z = 0
+    z = 0.25
 
     angles = np.linspace(-179,179,359)
     #angles = [135]
@@ -107,11 +112,11 @@ def main():
             print('...............................Angle Input to Shown Pose:' + str(ph))
 
             # Create Local Point's Transform Matrix
-            local_rot_matrix = _find_rot_matrix([x,y,z],ph)
+            local_rot_matrix = _find_rot_matrix([x,y,z],fixed_origin=fixed_posn,angle=ph)
             local_transform = tf.generateTransMatrix(local_rot_matrix,[x,y,z])
 
             # Convert to Fixed Frame (doesn't really do anything since already at origin)
-            fixed_transform = np.matmul(local_transform,fixed_pose)
+            fixed_transform = np.matmul(fixed_pose, local_transform)
             print(np.around(fixed_transform,3))
 
             # Check Rotation Matrix
@@ -131,8 +136,6 @@ def main():
             pose_geom = [rosmsg_geoPose([0,0,0,0,0,0])]
             for i in _path_pose:
                 pose_geom.append(rosmsg_geoPose(i))
-
-            #print(pose_geom)
 
             message = geometry_msgs.msg.PoseArray()
             message.header.frame_id = 'base_link'
@@ -155,8 +158,8 @@ def main():
         fig.suptitle('Rotation Matrix Debugging Analysis\n ')
 
         ax1.plot(angles,angles,label = 'Theta - Input')
-        ax1.plot(angles,theta_actual_cos,label = 'Theta - Cos derived (cell [0,0])')
-        ax1.plot(angles,theta_actual_sin,label = 'Theta - Sin derived (cell [0,2])')
+        ax1.plot(angles,theta_actual_cos, 'g:', label = 'Theta - Cos derived (cell [0,0])')
+        ax1.plot(angles,theta_actual_sin, 'b-',label = 'Theta - Sin derived (cell [0,2])')
         ax1.grid()
         ax1.legend()
         ax1.set_xlabel('Input Angle (degrees)')
