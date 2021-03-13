@@ -70,7 +70,7 @@ class InclinedPlane(DetectedObject):
         elif slope > 1:
             self._slope = 1
         elif slope < 0:
-            self._slope =0
+            self._slope = 0
         self._offset = offset
 
         # two planes for along the length
@@ -159,10 +159,7 @@ class InclinedPlane(DetectedObject):
 
 
 class SteppedRings(DetectedObject):
-    """
-    Path Plan generator for the Stepped Rings Shape
-    """
-
+    """ Path Plan generator for the Stepped Rings Shape """
     def __init__(self, size, center, rotation, level_count=5, density=10):
         """
         Call internal variables _path_tf or _path_pose

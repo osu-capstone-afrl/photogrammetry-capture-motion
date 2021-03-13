@@ -6,15 +6,15 @@ The the code in `scripts/` is to generate a path for the robot to follow which p
 
 ## Intended Use
 
-In whatever python file (e.g., `motion_inclined_plane.py` in this case) simply include `from path_plans import YOUR_DESIRED_PATH_PLAN` .  The each path plan requires:
+When writing a program, here's how to use one of the generated path plans. In your main python file (e.g., `motion_inclined_plane.py` in this case) simply include `from path_plans import YOUR_DESIRED_PATH_PLAN` .  Each path plan requires:
 
 1. The parts size as a `List[x_dimension, y_dimension, z_dimension]` in meters
 2. The parts center location as a `List[x_coordinate, y_coordinate, z_coordinate]` in meters
 3. The parts orientation as a `float` in degrees
 
-The base of the coordinate system is the same as the robot's base frame.  Orientation is measured between the part's x-axis and the robots. See [Details: Assumptions](#Assumptions) for more on this.
-
 Each path has some unique variables to adjust their set up. The all have default values that can be overwritten. For more information please check out the docstrings under each path class in the code.
+
+The base of the coordinate system is the same as the robot's base frame.  Orientation is measured between the part's x-axis and the robots. See [Details: Assumptions](#Assumptions) for more on this.
 
 To get use a path plan in code might look like this...
 
@@ -52,6 +52,52 @@ After this a second transformation is applied to each matrix, this rotates them 
 
 Finally, the z-axis of each frame should point towards the part. This orientation is challenging and the method for determining this transformation for each point is ongoing development. 
 
+
+
+### Inclined Plane
+
+This path plan consists of four planes, one for each side of the part's bounding box. The length of each plan matches the side of the bounding box that is is on and the height of all planes is equal to the height of the bounding box. The planes are sloped in, towards the box. 
+
+```python
+class InclinedPlane(DetectedObject):
+    """A container for the incline plane path plan"""
+    def __init__(self, size, center, rotation, x_num=5, z_num=5, slope=0.5, offset=0.25):
+        # type: (list[float], list[float], float, int, int, float, float) -> None
+        """Initialization function
+
+        :param size:      list[x,y,z] dimensions of presented part
+        :param center:    center of presented part in world frame coordinates
+        :param rotation:  rotation of presented part in world frame coordinates
+        :param x_num:     number of stepped levels
+        :param z_num:     number of points on a single level. Evenly distributed about the ring
+        :param slope:     factor [0,1] to adjust the tilt of each plane, 0 implies no tilt
+        :param offset:    Adjusts final position away from part along the each planes surface normal
+        """
+```
+
+
+
+### Stepped Rings
+
+This path plan consists of a several circles stacked, equally spaced, in the z-direction. Poses are evenly distributed on the circumference of each circle.
+
+```python
+class SteppedRings(DetectedObject):
+    """ Path Plan generator for the Stepped Rings Shape """
+    def __init__(self, size, center, rotation, level_count=5, density=10):
+        """
+        Call internal variables _path_tf or _path_pose
+
+        :param size:        list[x,y,z] dimensions of presented part
+        :param center:      center of presented part in world frame coordinates
+        :param rotation:    rotation of presented part in world frame coordinates
+        :param level_count: number of stepped levels
+        :param density:     number of points on a single level. Evenly distributed about the ring
+        """
+```
+
+
+
 ## Details 
 
 The following table briefly summarizes the contents of this directory:
@@ -86,11 +132,11 @@ For consistency and clarity, we highlight some terms here and explain what they 
 * **Center** location of the center relative to the robot's base frame in meters.
 * **Frame** or coordinate frame. A right-hand-rule reference frame usually described by a homogenous transformation matrix from the robot's base frame.
 * **Homogenous Transformation** a 4x4 matrix encoding rotation and transformation from one coordinate frame to another.
-* **Locator** a unit vector between pointing from one frame to another. Used for rotations.
+* **Locator** refers to the part's position relative to the robot's base frame.
 * **Message** a list of position in `[x, y, z]` and orientation in quaternion `[qx, qy, qz, qw]` used by ROS.
 * **Orientation** a rotation matrix, often part of a homogenous transformation.
 * **Path Plan** a [`path_plans.py`](https://github.com/osu-capstone-afrl/photogrammetry-capture-motion/blob/melodic/scripts/path_plans.py) object or the list of messages held in the object's `pose_andorientation` member variable.
-* **Pose** similar to position but usually in the context of a message rather than a homogenous transformation.
+* **Pose** in this code refers exclusively to the combination of a position and orientation needed to describe a frame.  Poses are formatted into messages for ROS.
 * **Position** abbreviated as posn. a list of `[x, y, z]`, often part of a homogenous transformation.
 * **Rotation** the angle between the robot's x-axis and the part's x-axis in degrees.
 * **Size** maximum dimensions of the part in meters.
@@ -124,7 +170,7 @@ In short, following these conventions will eliminate redundancy, increase readab
           """
   ```
 
-
+* **New path plans** should all inherit from the `DetectedObject` class which holds the size, rotation, and location of a detected object and establishes the `.pose_and_orientation`  variable. The job of each class is to to populate the pose and orientation variable.
 
 
 
