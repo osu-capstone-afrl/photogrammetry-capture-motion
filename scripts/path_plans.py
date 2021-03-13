@@ -165,8 +165,7 @@ class SteppedRings(DetectedObject):
     def __init__(self, size, center, rotation, level_count=5, density=10):
 
         # Setup Root Structure
-        # rotation frame hard coded to match fixed source frame
-        rotation = np.identity(3)
+        #rotation = np.identity(3)  # rotation frame hard coded to match fixed source frame
         super(SteppedRings, self)._tf_method(center,rotation)
 
         # Set smallest ring (w/o buffer)(diagonal length of rectanglular base)
@@ -188,7 +187,7 @@ class SteppedRings(DetectedObject):
 
         # Generation
         path_result = []
-        for lvl in self._levels[0:]:
+        for lvl in self._levels[1:]:
 
             ## DEBUG
             print("================================================== LEVEL #: " + str(lvl))
@@ -203,9 +202,9 @@ class SteppedRings(DetectedObject):
             for x,y,z in zip(xx,yy,zz):
 
                 # Find Orientation. ie rotation matrix
+                #- Methods 1,2,3 (axis-angle based)
                 rot_matrix_vectors = self._find_rot_matrix([x,y,z])
                 rot_matrix = np.matmul(np.identity(3), rot_matrix_vectors)
-                #rot_matrix = np.identity(3)
 
                 # Generate transforms list
                 path_result.append( self.tf.generateTransMatrix(rot_matrix,[x,y,z]) )
@@ -215,6 +214,11 @@ class SteppedRings(DetectedObject):
 
         # Convert path to Robot Poses (outputs a list of vectors x,y,z,qx,qy,qz,qw)
         self._path_pose = self.tf.convertPath2RobotPose(self._path_tf)
+        
+        ## Debug
+        # print("Quants Found")
+        # for i in self._path_pose:
+        #     print(np.around(i,4))
         
         return
 
@@ -245,28 +249,7 @@ class SteppedRings(DetectedObject):
 
         ###################
         ## Find Rot Matrix Conversion from World to Tool frame
-
         # Find ROT_MATRIX necessary to rotation vector 'a' onto 'b'
-        a = uvect_z     # unit z vector
-        b = uvect_og    # point to center
-
-
-        ###################
-        ## METHOD 1
-        ## Axis-Angle Rotation Method from Textbook. Ref. "Modern Robotics" Section 3.2 Pg 72 OR Eqn 3.52 
-        # http://hades.mech.northwestern.edu/images/2/25/MR-v2.pdf#equation.3.52
-
-        # Trash. Do Not use.
-        if False:
-            w = np.cross(a,b)
-            c = np.dot(a,b)                      # cos(pheta)
-            s = np.linalg.norm(np.cross(a,b),2)  # sin(pheta)
-
-            R = np.array([[ c+np.square(w[0]) * (1-c),      w[0]*w[1]*(1-c)-w[2]*s,         w[0]*w[2]*(1-c)+w[1]*s   ],
-                          [ w[0]*w[1]*(1-c)+w[2]*s,         c+np.square(w[1])*(1-c),        w[1]*w[2]*(1-c)-w[0]*s   ],
-                          [ w[0]*w[2]*(1-c)-w[1]*s,         w[1]*w[2]*(1-c)+w[0]*s,         c+np.square(w[2])*(1-c)  ]] )        
-            rot_matrix = R
-
 
         ###################
         ## METHOD 2
@@ -274,6 +257,8 @@ class SteppedRings(DetectedObject):
         # Solving Equation.. rot_matrix = F^-1 * G * F
         # All numpy.linalg.norm()'s are set to use L-2 norm. NOT Frobenius norm.
         if False:
+            a = uvect_z  # unit z vector
+            b = uvect_og  # point to center
             G = np.array( [[ np.dot(a,b),                     -np.linalg.norm(np.cross(a,b),2), 0],
                           [ np.linalg.norm(np.cross(a,b),2),   np.dot(a,b),                     0],
                           [ 0,                                 0,                               1]] )
@@ -287,13 +272,18 @@ class SteppedRings(DetectedObject):
         ## METHOD 3
         # Based on https://math.stackexchange.com/a/476311
         if True:
+            # Find ROT_MATRIX necessary to rotation vector 'a' onto 'b'
+            a = uvect_z     # unit z vector
+            b = uvect_og    # point to center
+
             v = np.cross(a,b)
             v = v / np.linalg.norm(v,2)
+            print('Rotate about v:',np.around(v,3))
 
             c = np.dot(a,b)                      # cos(pheta)
             s = np.linalg.norm(np.cross(a,b),2)  # sin(pheta)
 
-            #DEBUG: Output cos & sin values to determine if quantrant issues.
+            #DEBUG: Output cos & sin values to determine if quadrant issues.
             print('cos:',np.around(c,3))
             print('sin:',np.around(s,3))
 
@@ -303,35 +293,6 @@ class SteppedRings(DetectedObject):
             rot_matrix = np.identity(3) + s*v_x + (1-c)*np.matmul(v_x,v_x)
 
             print(np.around(rot_matrix,3))
-
-
-        ################ Method 4. Manual Rotation ####################
-        if False:
-            #TODO: Does this projection make sense??
-            vect_og2 = np.array( [ uvect_og[0], uvect_og[1], 0 ] )
-
-            pheta_prime_z = np.arctan2(vect_og[1],vect_og[0])
-            phi_prime_y = np.arccos( (np.dot(vect_og,vect_og2) ) / (np.linalg.norm(vect_og,2)*np.linalg.norm(vect_og2,2))  )
-
-
-            ## Generate Rotation Matrices
-            s = np.sin(pheta_prime_z)
-            c = np.cos(pheta_prime_z)
-
-            rot_z = np.matrix([ [ c, -s, 0],
-                                [ s,  c, 0],
-                                [ 0,  0, 1] ])
-
-            s = np.sin(phi_prime_y)
-            c = np.cos(phi_prime_y)
-
-            rot_y = np.matrix([ [ c, 0, s],
-                                [ 0, 1, 0],
-                                [-s, 0, c] ])
-
-            # Rotation Matrix (Rotation w.r.t fixed frame)(pre-multiply)
-            rot_matrix = np.matmul(rot_z,rot_y)
-
 
         ##############################################################
 
@@ -373,7 +334,7 @@ def main():
     twist_angle = 30
 
     # Stepped Rings Visualization Demo
-    if False:
+    if True:
         print("......Method: SteppedRings ")
         demo_rings = SteppedRings(dimensions,center_loc, np.identity(3))
 
