@@ -206,6 +206,9 @@ class SteppedRings(DetectedObject):
                 rot_matrix_vectors = self._find_rot_matrix([x,y,z])
                 rot_matrix = np.matmul(np.identity(3), rot_matrix_vectors)
 
+                #- Method 4 (axial-vectors based)
+                #rot_matrix = self._rotMatrix_newTechnique([x,y,z])
+                
                 # Generate transforms list
                 path_result.append( self.tf.generateTransMatrix(rot_matrix,[x,y,z]) )
 
@@ -320,6 +323,60 @@ class SteppedRings(DetectedObject):
 
         return rot_matrix
 
+    def _rotMatrix_newTechnique(self, local_point):
+        # based on method described in acbuynak's paper.
+
+        # DEBUG
+        print("-------- NEW ANGLE-----------------------")
+        print('local point', np.around(local_point,3))
+
+        # World Frame (ignoring translation)
+        vector_z = np.subtract([0,0,0], local_point)
+
+        # Create two test vectors
+        vector_x_1 = [-vector_z[1], vector_z[0], 0]
+        vector_x_2 = [vector_z[1], -vector_z[0], 0]
+        
+        #print('vect x-1', np.around(vector_x_1,3))
+        #print('vect x-2', np.around(vector_x_2,3))
+
+        # Cross Product (order matters, must multiply <Z> cross <X>)
+        vector_y_1 = np.cross(vector_z, vector_x_1)
+        vector_y_2 = np.cross(vector_z, vector_x_2)
+        
+        #print('vect y-1', np.around(vector_y_1,3))
+        #print('vect y-2', np.around(vector_y_2,3))
+        #print('vect z', np.around(vector_z,3))
+        
+        # Check Signs
+        if vector_z[0] == 0 and vector_z[1] == 0:
+            print("Special Case. Vector Z, collinear with Z-Axis")
+        elif vector_y_1[2] > 0:
+            print("case 1")
+            vector_x = vector_x_1
+            vector_y = vector_y_1
+        elif vector_y_2[2] > 0:
+            print("case 2")
+            vector_x = vector_x_2
+            vector_y = vector_y_2
+        
+        # Debug
+        #print('Final Vectors')
+        #print("X", np.around(vector_x,3))
+        #print("Y", np.around(vector_y,3))
+        #print("Z", np.around(vector_z,3))
+
+        # Normalize
+        vector_x = vector_x / np.linalg.norm(vector_x)
+        vector_y = vector_y / np.linalg.norm(vector_y)
+        vector_z = vector_z / np.linalg.norm(vector_z)
+
+        # Rotation Matrix
+        # https://en.wikipedia.org/wiki/Rotation_formalisms_in_three_dimensions#Formalism_alternatives
+        rot_matrix = np.stack((vector_x, vector_y, vector_z), axis=1)
+        #print("rot matrix", np.around(rot_matrix,3))
+        
+        return rot_matrix
 
 ''' TESTING AND VISUALIZATION BELOW '''
 
