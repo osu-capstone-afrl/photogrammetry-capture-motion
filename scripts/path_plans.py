@@ -150,7 +150,8 @@ class InclinedPlane(DetectedObject):
 
 class SteppedRings(DetectedObject):
     """
-    Path Plan generator for the Stepped Rings Shape
+    Path Plan generator for the Stepped Rings Shape.
+    Stacked rings extending from base to 110% of input part height
     Relies on numpy (np)
     Usage: call internal variables _path_tf or _path_pose
 
@@ -165,14 +166,13 @@ class SteppedRings(DetectedObject):
     def __init__(self, size, center, rotation, level_count=5, density=10):
 
         # Setup Root Structure
-        #rotation = np.identity(3)  # rotation frame hard coded to match fixed source frame
         super(SteppedRings, self)._tf_method(center,rotation)
 
         # Set smallest ring (w/o buffer)(diagonal length of rectanglular base)
         self._min_diameter = np.hypot( size[0], size[1] )
 
         # Set number and final height of levels (distribute n levels across height)
-        self._levels = np.linspace(0, size[2], level_count+1)
+        self._levels = np.linspace(0, size[2]*0.10, level_count+1)
 
         # Passthru variables
         self._density = density
@@ -189,9 +189,6 @@ class SteppedRings(DetectedObject):
         path_result = []
         for lvl in self._levels[1:]:
 
-            ## DEBUG
-            print("================================================== LEVEL #: " + str(lvl))
-
             # Create Ring
             pheta = np.linspace(-np.pi, np.pi, self._density, endpoint=False)
             xx = (self._min_diameter * np.cos(pheta))
@@ -201,15 +198,7 @@ class SteppedRings(DetectedObject):
             # Create Transforms
             for x,y,z in zip(xx,yy,zz):
 
-                # Find Orientation. ie rotation matrix
-                #- Methods 1,2,3 (axis-angle based)
-                rot_matrix_vectors = self._find_rot_matrix([x,y,z])
-                rot_matrix = np.matmul(np.identity(3), rot_matrix_vectors)
-
-                #- Method 4 (axial-vectors based)
-                #rot_matrix = self._rotMatrix_newTechnique([x,y,z])
-                
-                # Generate transforms list
+                rot_matrix = self._rotMatrix_newTechnique([x,y,z])
                 path_result.append( self.tf.generateTransMatrix(rot_matrix,[x,y,z]) )
 
         # Shift path body to be framed in context of Global Fixed Frame (0,0,0)
@@ -218,153 +207,40 @@ class SteppedRings(DetectedObject):
         # Convert path to Robot Poses (outputs a list of vectors x,y,z,qx,qy,qz,qw)
         self._path_pose = self.tf.convertPath2RobotPose(self._path_tf)
         
-        ## Debug
-        # print("Quants Found")
-        # for i in self._path_pose:
-        #     print(np.around(i,4))
-        
         return
 
-
-    def _find_rot_matrix(self, local_point):
+    def _rotMatrix_newTechnique(self, local_point):
         """
-            Calculate and return rotation matrix to orient the resultant Z-axis along a vector
+            Generate a rotation matrix to orient the resultant Z-axis along a vector
             between a input camera position (local_point) and the central part location.
+            Defined such that tool frame's Y-axis is constrained to a plane parallel with floor.
 
             :param local_point: (list) Input Camera Position in cartesian coordinates [X,Y,Z]
             :return rot_matrix: Rotation Matrix as 3x3 Numpy Matrix 
         """
 
-
-        # DEBUG
-        print("-------- NEW ANGLE-----------------------")
-
-        # World Frame (ignoring translation)
-        vect_og = np.subtract([0,0,0], local_point)
-        uvect_og = vect_og / np.linalg.norm(vect_og)
-
-        print('Vector',np.around(vect_og,2))
-        print('Unit Vector',np.around(uvect_og,2))
-
-        # New Tool Frame
-        uvect_z = np.array([0,0,1])
-
-
-        ###################
-        ## Find Rot Matrix Conversion from World to Tool frame
-        # Find ROT_MATRIX necessary to rotation vector 'a' onto 'b'
-
-        ###################
-        ## METHOD 2
-        # Based on https://math.stackexchange.com/a/897677
-        # Solving Equation.. rot_matrix = F^-1 * G * F
-        # All numpy.linalg.norm()'s are set to use L-2 norm. NOT Frobenius norm.
-        if False:
-            a = uvect_z  # unit z vector
-            b = uvect_og  # point to center
-            G = np.array( [[ np.dot(a,b),                     -np.linalg.norm(np.cross(a,b),2), 0],
-                          [ np.linalg.norm(np.cross(a,b),2),   np.dot(a,b),                     0],
-                          [ 0,                                 0,                               1]] )
-
-            F = np.linalg.inv( np.stack( [  a, (b-np.dot(a,b)*a)/np.linalg.norm(b-np.dot(a,b)*a,2), np.cross(b,a)]) )
-
-            rot_matrix = np.matmul( np.matmul( F, G), np.linalg.inv(F))
-
-
-        ###################
-        ## METHOD 3
-        # Based on https://math.stackexchange.com/a/476311
-        if True:
-            # Find ROT_MATRIX necessary to rotation vector 'a' onto 'b'
-            a = uvect_z     # unit z vector
-            b = uvect_og    # point to center
-
-            v = np.cross(a,b)
-            v = v / np.linalg.norm(v,2)
-            print('Rotate about v:',np.around(v,3))
-
-            c = np.dot(a,b)                      # cos(pheta)
-            s = np.linalg.norm(np.cross(a,b),2)  # sin(pheta)
-
-            #DEBUG: Output cos & sin values to determine if quadrant issues.
-            print('cos:',np.around(c,3))
-            print('sin:',np.around(s,3))
-
-            v_x = np.array( [[ 0,      -v[2],   v[1] ],
-                             [ v[2],    0,     -v[0] ],
-                             [-v[1],    v[0],   0    ]] )
-            rot_matrix = np.identity(3) + s*v_x + (1-c)*np.matmul(v_x,v_x)
-
-            print(np.around(rot_matrix,3))
-
-        ##############################################################
-
-        # DEBUG
-        if False:
-            print("Locator: ", self._locator[:-1,3])
-            print("Local Point: ", np.around(local_point,2))
-            print("Unit Vector of Interest: ", np.around(uvect_og,2))
-            #print("Rotation Vector: ", v)
-            #print("Skew Sym Cross-Product: ", v_x)
-            #print(np.dot(v_x,v_x))
-            print("Rot Matrix:",np.around(rot_matrix,2))
-            #print((1/(1+c)))
-
-
-        ###################
-        ## Checks / Debug
-        # LP: length-preserving. Success if "1"
-        # ACR: confirm sucessfully rotates A onto B. Success if "0"
-        if False:
-            check_LP  = np.linalg.norm(rot_matrix,2)
-            check_ACR = np.linalg.norm(b-np.matmul(rot_matrix,a),2)
-            print("|....LP.....|....ACR....|")
-            print("|  "+str(check_LP)+"  |  "+str(check_ACR)+"  |")
-
-        return rot_matrix
-
-    def _rotMatrix_newTechnique(self, local_point):
-        # based on method described in acbuynak's paper.
-
-        # DEBUG
-        print("-------- NEW ANGLE-----------------------")
-        print('local point', np.around(local_point,3))
-
         # World Frame (ignoring translation)
         vector_z = np.subtract([0,0,0], local_point)
 
         # Create two test vectors
-        vector_x_1 = [-vector_z[1], vector_z[0], 0]
-        vector_x_2 = [vector_z[1], -vector_z[0], 0]
+        vector_y_1 = [-vector_z[1], vector_z[0], 0]
+        vector_y_2 = [vector_z[1], -vector_z[0], 0]
         
-        #print('vect x-1', np.around(vector_x_1,3))
-        #print('vect x-2', np.around(vector_x_2,3))
-
-        # Cross Product (order matters, must multiply <Z> cross <X>)
-        vector_y_1 = np.cross(vector_z, vector_x_1)
-        vector_y_2 = np.cross(vector_z, vector_x_2)
-        
-        #print('vect y-1', np.around(vector_y_1,3))
-        #print('vect y-2', np.around(vector_y_2,3))
-        #print('vect z', np.around(vector_z,3))
+        # Find third vector (order matters, must multiply <Y> cross <Z> to follow right-hand-rule)
+        vector_x_1 = np.cross(vector_y_1, vector_z)
+        vector_x_2 = np.cross(vector_y_2, vector_z)
         
         # Check Signs
         if vector_z[0] == 0 and vector_z[1] == 0:
             print("Special Case. Vector Z, collinear with Z-Axis")
-        elif vector_y_1[2] > 0:
-            print("case 1")
+            vector_x = np.array([1,0,0])
+            vector_y = np.array([0,1,1])
+        elif vector_x_1[2] > 0:
             vector_x = vector_x_1
             vector_y = vector_y_1
-        elif vector_y_2[2] > 0:
-            print("case 2")
+        elif vector_x_2[2] > 0:
             vector_x = vector_x_2
             vector_y = vector_y_2
-        
-        # Debug
-        #print('Final Vectors')
-        #print("X", np.around(vector_x,3))
-        #print("Y", np.around(vector_y,3))
-        #print("Z", np.around(vector_z,3))
 
         # Normalize
         vector_x = vector_x / np.linalg.norm(vector_x)
@@ -374,12 +250,12 @@ class SteppedRings(DetectedObject):
         # Rotation Matrix
         # https://en.wikipedia.org/wiki/Rotation_formalisms_in_three_dimensions#Formalism_alternatives
         rot_matrix = np.stack((vector_x, vector_y, vector_z), axis=1)
-        #print("rot matrix", np.around(rot_matrix,3))
         
         return rot_matrix
 
-''' TESTING AND VISUALIZATION BELOW '''
 
+
+''' TESTING AND VISUALIZATION BELOW '''
 
 def main():
     """For testing code and visualizing the points"""
