@@ -198,7 +198,7 @@ class SteppedRings(DetectedObject):
             # Create Transforms
             for x,y,z in zip(xx,yy,zz):
 
-                rot_matrix = self._rotMatrix_newTechnique([x,y,z])
+                rot_matrix = self._rotationMatrix_orient_z_axis([x,y,z])
                 path_result.append( self.tf.generateTransMatrix(rot_matrix,[x,y,z]) )
 
         # Shift path body to be framed in context of Global Fixed Frame (0,0,0)
@@ -209,7 +209,7 @@ class SteppedRings(DetectedObject):
         
         return
 
-    def _rotMatrix_newTechnique(self, local_point):
+    def _rotationMatrix_orient_z_axis(self, local_point):
         """
             Generate a rotation matrix to orient the resultant Z-axis along a vector
             between a input camera position (local_point) and the central part location.
