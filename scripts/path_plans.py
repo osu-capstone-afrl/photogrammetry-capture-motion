@@ -159,28 +159,30 @@ class InclinedPlane(DetectedObject):
 
 
 class SteppedRings(DetectedObject):
-    """ Path Plan generator for the Stepped Rings Shape """
+    """
+    Path Plan generator for the Stepped Rings Shape.
+    Stacked rings extending from base to 110% of input part height
+    Relies on numpy (np)
+    Usage: call internal variables _path_tf or _path_pose
+    
+    :param size:        list[x,y,z] dimensions of presented part
+    :param center:      center of presented part in world frame coordinates
+    :param rotation:    rotation of presented part in world frame coordinates
+    :param level_count: number of stepped levels
+    :param density:     number of points on a single level. Evenly distributed about the ring
+    """
+
+
     def __init__(self, size, center, rotation, level_count=5, density=10):
-        """
-        Call internal variables _path_tf or _path_pose
-
-        :param size:        list[x,y,z] dimensions of presented part
-        :param center:      center of presented part in world frame coordinates
-        :param rotation:    rotation of presented part in world frame coordinates
-        :param level_count: number of stepped levels
-        :param density:     number of points on a single level. Evenly distributed about the ring
-        """
-
+        
         # Setup Root Structure
-        # rotation frame hard coded to match fixed source frame
-        rotation = np.identity(3)
         super(SteppedRings, self)._tf_method(center,rotation)
 
         # Set smallest ring (w/o buffer)(diagonal length of rectanglular base)
         self._min_diameter = np.hypot( size[0], size[1] )
 
         # Set number and final height of levels (distribute n levels across height)
-        self._levels = np.linspace(0, size[2], level_count+1)
+        self._levels = np.linspace(0, size[2]*0.10, level_count+1)
 
         # Passthru variables
         self._density = density
@@ -195,10 +197,7 @@ class SteppedRings(DetectedObject):
 
         # Generation
         path_result = []
-        for lvl in self._levels[0:]:
-
-            ## DEBUG
-            print("================================================== LEVEL #: " + str(lvl))
+        for lvl in self._levels[1:]:
 
             # Create Ring
             pheta = np.linspace(-np.pi, np.pi, self._density, endpoint=False)
@@ -209,12 +208,7 @@ class SteppedRings(DetectedObject):
             # Create Transforms
             for x,y,z in zip(xx,yy,zz):
 
-                # Find Orientation. ie rotation matrix
-                rot_matrix_vectors = self._find_rot_matrix([x,y,z])
-                rot_matrix = np.matmul(np.identity(3), rot_matrix_vectors)
-                #rot_matrix = np.identity(3)
-
-                # Generate transforms list
+                rot_matrix = self._rotationMatrix_orient_z_axis([x,y,z])
                 path_result.append( self.tf.generateTransMatrix(rot_matrix,[x,y,z]) )
 
         # Shift path body to be framed in context of Global Fixed Frame (0,0,0)
@@ -225,149 +219,53 @@ class SteppedRings(DetectedObject):
         
         return
 
-
-    def _find_rot_matrix(self, local_point):
+    def _rotationMatrix_orient_z_axis(self, local_point):
         """
-            Calculate and return rotation matrix to orient the resultant Z-axis along a vector
+            Generate a rotation matrix to orient the resultant Z-axis along a vector
             between a input camera position (local_point) and the central part location.
+            Defined such that tool frame's Y-axis is constrained to a plane parallel with floor.
 
             :param local_point: (list) Input Camera Position in cartesian coordinates [X,Y,Z]
             :return rot_matrix: Rotation Matrix as 3x3 Numpy Matrix 
         """
 
-
-        # DEBUG
-        print("-------- NEW ANGLE-----------------------")
-
         # World Frame (ignoring translation)
-        vect_og = np.subtract([0,0,0], local_point)
-        uvect_og = vect_og / np.linalg.norm(vect_og)
+        vector_z = np.subtract([0,0,0], local_point)
 
-        print('Vector',np.around(vect_og,2))
-        print('Unit Vector',np.around(uvect_og,2))
+        # Create two test vectors
+        vector_y_1 = [-vector_z[1], vector_z[0], 0]
+        vector_y_2 = [vector_z[1], -vector_z[0], 0]
+        
+        # Find third vector (order matters, must multiply <Y> cross <Z> to follow right-hand-rule)
+        vector_x_1 = np.cross(vector_y_1, vector_z)
+        vector_x_2 = np.cross(vector_y_2, vector_z)
+        
+        # Check Signs
+        if vector_z[0] == 0 and vector_z[1] == 0:
+            print("Special Case. Vector Z, collinear with Z-Axis")
+            vector_x = np.array([1,0,0])
+            vector_y = np.array([0,1,1])
+        elif vector_x_1[2] > 0:
+            vector_x = vector_x_1
+            vector_y = vector_y_1
+        elif vector_x_2[2] > 0:
+            vector_x = vector_x_2
+            vector_y = vector_y_2
 
-        # New Tool Frame
-        uvect_z = np.array([0,0,1])
+        # Normalize
+        vector_x = vector_x / np.linalg.norm(vector_x)
+        vector_y = vector_y / np.linalg.norm(vector_y)
+        vector_z = vector_z / np.linalg.norm(vector_z)
 
-
-        ###################
-        ## Find Rot Matrix Conversion from World to Tool frame
-
-        # Find ROT_MATRIX necessary to rotation vector 'a' onto 'b'
-        a = uvect_z     # unit z vector
-        b = uvect_og    # point to center
-
-
-        ###################
-        ## METHOD 1
-        ## Axis-Angle Rotation Method from Textbook. Ref. "Modern Robotics" Section 3.2 Pg 72 OR Eqn 3.52 
-        # http://hades.mech.northwestern.edu/images/2/25/MR-v2.pdf#equation.3.52
-
-        # Trash. Do Not use.
-        if False:
-            w = np.cross(a,b)
-            c = np.dot(a,b)                      # cos(pheta)
-            s = np.linalg.norm(np.cross(a,b),2)  # sin(pheta)
-
-            R = np.array([[ c+np.square(w[0]) * (1-c),      w[0]*w[1]*(1-c)-w[2]*s,         w[0]*w[2]*(1-c)+w[1]*s   ],
-                          [ w[0]*w[1]*(1-c)+w[2]*s,         c+np.square(w[1])*(1-c),        w[1]*w[2]*(1-c)-w[0]*s   ],
-                          [ w[0]*w[2]*(1-c)-w[1]*s,         w[1]*w[2]*(1-c)+w[0]*s,         c+np.square(w[2])*(1-c)  ]] )        
-            rot_matrix = R
-
-
-        ###################
-        ## METHOD 2
-        # Based on https://math.stackexchange.com/a/897677
-        # Solving Equation.. rot_matrix = F^-1 * G * F
-        # All numpy.linalg.norm()'s are set to use L-2 norm. NOT Frobenius norm.
-        if False:
-            G = np.array( [[ np.dot(a,b),                     -np.linalg.norm(np.cross(a,b),2), 0],
-                          [ np.linalg.norm(np.cross(a,b),2),   np.dot(a,b),                     0],
-                          [ 0,                                 0,                               1]] )
-
-            F = np.linalg.inv( np.stack( [  a, (b-np.dot(a,b)*a)/np.linalg.norm(b-np.dot(a,b)*a,2), np.cross(b,a)]) )
-
-            rot_matrix = np.matmul( np.matmul( F, G), np.linalg.inv(F))
-
-
-        ###################
-        ## METHOD 3
-        # Based on https://math.stackexchange.com/a/476311
-        if True:
-            v = np.cross(a,b)
-
-            c = np.dot(a,b)                      # cos(pheta)
-            s = np.linalg.norm(np.cross(a,b),2)  # sin(pheta)
-
-            #DEBUG: Output cos & sin values to determine if quantrant issues.
-            print('cos:',np.around(c,3))
-            print('sin:',np.around(s,3))
-
-            v_x = np.array( [[ 0,      -v[2],   v[1] ],
-                             [ v[2],    0,     -v[0] ],
-                             [-v[1],    v[0],   0    ]] )
-            rot_matrix = np.identity(3) + v_x + np.dot(v_x,v_x) * (1/(1+c))
-
-            print(np.around(rot_matrix,3))
-
-
-        ################ Method 4. Manual Rotation ####################
-        if False:
-            #TODO: Does this projection make sense??
-            vect_og2 = np.array( [ uvect_og[0], uvect_og[1], 0 ] )
-
-            pheta_prime_z = np.arctan2(vect_og[1],vect_og[0])
-            phi_prime_y = np.arccos( (np.dot(vect_og,vect_og2) ) / (np.linalg.norm(vect_og,2)*np.linalg.norm(vect_og2,2))  )
-
-
-            ## Generate Rotation Matrices
-            s = np.sin(pheta_prime_z)
-            c = np.cos(pheta_prime_z)
-
-            rot_z = np.matrix([ [ c, -s, 0],
-                                [ s,  c, 0],
-                                [ 0,  0, 1] ])
-
-            s = np.sin(phi_prime_y)
-            c = np.cos(phi_prime_y)
-
-            rot_y = np.matrix([ [ c, 0, s],
-                                [ 0, 1, 0],
-                                [-s, 0, c] ])
-
-            # Rotation Matrix (Rotation w.r.t fixed frame)(pre-multiply)
-            rot_matrix = np.matmul(rot_z,rot_y)
-
-
-        ##############################################################
-
-        # DEBUG
-        if False:
-            print("Locator: ", self._locator[:-1,3])
-            print("Local Point: ", np.around(local_point,2))
-            print("Unit Vector of Interest: ", np.around(uvect_og,2))
-            #print("Rotation Vector: ", v)
-            #print("Skew Sym Cross-Product: ", v_x)
-            #print(np.dot(v_x,v_x))
-            print("Rot Matrix:",np.around(rot_matrix,2))
-            #print((1/(1+c)))
-
-
-        ###################
-        ## Checks / Debug
-        # LP: length-preserving. Success if "1"
-        # ACR: confirm sucessfully rotates A onto B. Success if "0"
-        if False:
-            check_LP  = np.linalg.norm(rot_matrix,2)
-            check_ACR = np.linalg.norm(b-np.matmul(rot_matrix,a),2)
-            print("|....LP.....|....ACR....|")
-            print("|  "+str(check_LP)+"  |  "+str(check_ACR)+"  |")
-
+        # Rotation Matrix
+        # https://en.wikipedia.org/wiki/Rotation_formalisms_in_three_dimensions#Formalism_alternatives
+        rot_matrix = np.stack((vector_x, vector_y, vector_z), axis=1)
+        
         return rot_matrix
 
 
-''' TESTING AND VISUALIZATION BELOW '''
 
+''' TESTING AND VISUALIZATION BELOW '''
 
 def main():
     """For testing code and visualizing the points"""
@@ -379,7 +277,7 @@ def main():
     twist_angle = 30
 
     # Stepped Rings Visualization Demo
-    if False:
+    if True:
         print("......Method: SteppedRings ")
         demo_rings = SteppedRings(dimensions,center_loc, np.identity(3))
 

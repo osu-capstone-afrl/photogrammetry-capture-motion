@@ -7,20 +7,15 @@
 # Author: Adam Buynak                               #
 #####################################################
 
-## IMPORTS ##
 import rospy
-
-from path_plans import DetectedObject
-from path_plans import InclinedPlane
-
 import geometry_msgs.msg
-
-## Quaternion Tools
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
+
+#####################################################
 ## SUPPORT FUNCTIONS ##
 def rosmsg_geoPose(pose):
-    ## Recieves dictionary and list formats and returns a tf2.geom.pose message
+    ## Receives dictionary and list formats and returns a tf2.geom.pose message
 
     # Get Current Orientation in Quanternion Format
     # http://docs.ros.org/en/api/geometry_msgs/html/msg/Pose.html
@@ -52,7 +47,10 @@ def rosmsg_geoPose(pose):
         pose_goal.orientation.z = q_orientGoal[2]
         pose_goal.orientation.w = q_orientGoal[3]
 
-    elif isinstance(pose,list):
+    elif isinstance(pose,list) and len(pose)==6:
+        # Accepts List of Length 6.
+        # List = [ x, y, z, euler_x, euler_y, euler_z ]
+        
         # Convert Euler Orientation Request to Quanternion
         q_orientGoal = quaternion_from_euler(pose[3],pose[4],pose[5],axes='sxyz')
 
@@ -65,8 +63,21 @@ def rosmsg_geoPose(pose):
         pose_goal.orientation.z = q_orientGoal[2]
         pose_goal.orientation.w = q_orientGoal[3]
 
+    elif isinstance(pose, list) and len(pose) == 7:
+        # Accepts List of Length 7.
+        # List = [ x, y, z, q_x, q_y, q_z, q_w ]
+    
+        pose_goal = geometry_msgs.msg.Pose()
+        pose_goal.position.x = pose[0]
+        pose_goal.position.y = pose[1]
+        pose_goal.position.z = pose[2]
+        pose_goal.orientation.x = pose[3]
+        pose_goal.orientation.y = pose[4]
+        pose_goal.orientation.z = pose[5]
+        pose_goal.orientation.w = pose[6]
+    
     else:
-        print("---> Incorrect Input Format")
+        print("\n---> WARNING: Incorrect Input Format\n")
 
     return pose_goal
 
@@ -81,7 +92,7 @@ def node_cameraPoseArray(inputArray):
 
     # Config node
     pub = rospy.Publisher('cameraPoseArray', PoseArray, queue_size=10) #TODO: couldn't get latch=True to work. Looping instead
-    rospy.init_node('cameraPoseArray', anonymous=False)
+    rospy.init_node('cameraPoseArray', anonymous=True)
     rate = rospy.Rate(1) # 10hz
 
     message = geometry_msgs.msg.PoseArray()
@@ -96,30 +107,31 @@ def node_cameraPoseArray(inputArray):
 
 
 
-
+#####################################################
 ## MAIN CODE ##
 def main():
-
+    import numpy as np
+    from path_plans import DetectedObject
+    from path_plans import InclinedPlane
+    from path_plans import SteppedRings
+    
     # Example detected object definition
     # copied from motion_inclined_plane.py.. duplicate
-    object_size = [0.1, 0.2, 0.5]
-    object_posn = [0.0, 0.0, 0]
-    rot_z = 0
+    object_size = [0.2, 0.2, 0.5]
+    object_posn = [0, 0, 0]
+    
+    ## Sample Use: Inclined Plane
+    #rot_z = 0
     #demo_blade = InclinedPlane(object_size, object_posn, rot_z)
-    from path_plans import DetectedObject
-    from path_plans import SteppedRings
-    import numpy as np
-    demo_blade = SteppedRings(object_size, object_posn, np.identity(3), level_count=1, density=4)
 
+    ## Sample Use: Stepped Rings
+    demo_blade = SteppedRings(object_size, object_posn, np.identity(3), level_count=2, density=8)
+
+    ## Visualization in RVIZ
     # Generate PoseArray for ROS Node Publisher
-    pose_geom = [rosmsg_geoPose([0,0,0,0,0,0])]
+    pose_geom = [rosmsg_geoPose([object_posn[0],object_posn[1],object_posn[2],0,0,0,0])]
     for i in demo_blade._path_pose:
         pose_geom.append(rosmsg_geoPose(i))
-
-
-    #print(pose_geom)
-    #print(pose_geom[0])  #example of single, first pose vector
-
 
     # Try launching ros node
     try:
