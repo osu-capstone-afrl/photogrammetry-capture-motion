@@ -1,3 +1,4 @@
+from typing import List
 import numpy as np
 
 
@@ -5,7 +6,16 @@ class Plane(object):
     """Container for defining a plane by a list of x-by-z equally spaced points"""
     def __init__(self, x_num, z_num, x_len, z_len):
         # type: (int, int, float, float) -> None
-        """Initializes a plane abject as a list of [x,y,z] coordinates"""
+        """
+        Initializes a plane abject as a list of [x,y,z] coordinates. Starts at the origin and builds
+        in the positive x and positive z directions.
+
+        @param x_num: Number of points to be placed in the x-direction / length
+        @param z_num: Number of points to be placed in the z-direction / height
+        @param x_len: Length of plane along the x-axis
+        @param z_len: Length of plane along the z-axis
+        """
+
         self._x_num = x_num
         self._z_num = z_num
         self._x_len = x_len
@@ -13,11 +23,27 @@ class Plane(object):
         self._x_space = x_len / float(x_num - 1)
         self._z_space = z_len / float(z_num - 1)
 
-        self.points = self._get_plane_points()
+        self._points = self._set_up_plane()
 
-    def _get_plane_points(self):
-        # type: () -> list[[list[float]]]
-        """Returns all the points on the plane. Attempts to do this in a path-planning friendly way"""
+    def get_points(self):
+        # type: () -> List[List[float]]
+        """
+        Getter function that returns a list of points [x, y, z] that describe the
+        plane object.
+
+        @return: List of lists formatted as [x, y, z]
+        """
+        return self._points
+
+    def _set_up_plane(self):
+        # type: () -> List[List[float]]
+        """
+        Internal function called by __init__ to place the points of the plane.
+        Flips the order of every row for easier path tracing by the robot.
+
+        @return: List of lists formatted as [x, y, z] that describe the plane
+        """
+
         ret_list = []  # [[X0, Y0, Z0], [X1, Y1, Z1], ... ]  <- list of lists
         height = 0
         temp_list = [[0, 0, 0]]  # the temp list starts with the origin
@@ -35,72 +61,35 @@ class Plane(object):
 
         return ret_list
 
-    def rotate(self, axis, angle, rad=False):
-        # type: (str, float, bool) -> None
-        """Rotates points in a plane around a specific global axis by the specified angle"""
-        if axis not in ['x', 'X', 'y', 'Y', 'z', 'Z']:
-            print "[WARN] Invalid axis in Plane.rotate(), original list was not changed"
-            return
 
-        if not rad:
-            angle *= np.pi / 180
+class Ring(object):
+    """Container for a ring defined by a list of equally spaced points around a circle"""
+    def __init__(self, diameter, height, density=10):
+        # type: (float, float, int) -> None
+        """
+        Creates a ring of point with the specified diameter and density. The ring is
+        offset from the XY-plane by the height.
 
-        rot = np.identity(3)
-        if axis in ['x', 'X']:
-            rot[1][1] = np.cos(angle)
-            rot[1][2] = np.sin(angle) * -1
-            rot[2][1] = np.sin(angle)
-            rot[2][2] = np.cos(angle)
-        elif axis in ['y', 'Y']:
-            rot[0][0] = np.cos(angle)
-            rot[0][2] = np.sin(angle)
-            rot[2][0] = np.sin(angle) * -1
-            rot[2][2] = np.cos(angle)
-        elif axis in ['z', 'Z']:
-            rot[0][0] = np.cos(angle)
-            rot[0][1] = np.sin(angle) * -1
-            rot[1][0] = np.sin(angle)
-            rot[1][1] = np.cos(angle)
+        Call Ring.get_points() to retrieve the points.
 
-        for p in self.points:
-            p[:] = np.matmul(rot, p).tolist()
+        @param diameter: Diameter of the ring
+        @param height:   Distance from the XY-plane
+        @param density:  How many points to place around the ring
+        """
+        theta = np.linspace(-np.pi, np.pi, density, endpoint=False)
+        x = diameter * np.cos(theta)
+        y = diameter * np.sin(theta)
+        z = np.full_like(theta, height)
 
-        return
+        self.ring = []
+        for _x, _y, _z in zip(x, y, z):
+            self.ring.append([_x, _y, _z])
 
-    def translate(self, axis, dist):
-        # type: (str, float) -> None
-        """Translates points in a plane around a specified global axis by the specified distance"""
-        if axis not in ['x', 'X', 'y', 'Y', 'z', 'Z', 'n', 'N']:
-            print "[WARN] Invalid axis in Plane.translate(), original list was not changed"
-            return
+    def get_points(self):
+        # type: () ->  List[List[float]]
+        """
+        Getter for the list of points created upon calling __init__
 
-        for p in self.points:
-            if axis in ['x', 'X']:
-                p[0] += dist
-            elif axis in ['y', 'Y']:
-                p[1] += dist
-            elif axis in ['z', 'Z']:
-                p[2] += dist
-
-        if axis in ['n', 'N']:
-            n = self.get_surf_norm()
-            for p in self.points:
-                p[0] += n[0] * dist
-                p[1] += n[1] * dist
-                p[2] += n[2] * dist
-
-        return
-
-    def get_surf_norm(self):
-        # type: () -> list[float]
-        """Returns the normal vector to the plane, scaled to unit length"""
-        # todo: check if the directions are consistent with what we expect
-        a = np.subtract(self.points[0], self.points[1])
-        b = np.subtract(self.points[0], self.points[-1])
-
-        norm = np.cross(a, b)
-
-        return (norm / (norm**2).sum()**0.5).tolist()
-
-
-
+        @return: List of [x, y, z] coordinates for the ring
+        """
+        return self.ring
