@@ -163,7 +163,7 @@ class DetectedObject(object):
         return rot_matrix
 
 
-class NewInclinedPlane(DetectedObject):
+class InclinedPlane(DetectedObject):
     """A container for the incline plane path plan"""
     def __init__(self, size, locator, orientation, count=(5, 5), clearance=0.25, plane_scale=(2, 2),\
                  slope=0.5, offset=0.25):
@@ -189,7 +189,7 @@ class NewInclinedPlane(DetectedObject):
         self._slope = slope
         self._offset = offset
 
-        super(NewInclinedPlane, self).__init__(size, locator, orientation)
+        super(InclinedPlane, self).__init__(size, locator, orientation)
 
         ''' OVERWRITE THESE VARIABLES IN YOUR PATH PLAN '''
         # Holds path as a list of transformations relative to _global_origin (0,0,0)
@@ -367,7 +367,7 @@ def main():
 
     if True:
         print("......Method: NewPlanes ")
-        demo = NewInclinedPlane(dimensions, center_loc, orientation, \
+        demo = InclinedPlane(dimensions, center_loc, orientation, \
                                 count=(5,5), slope=0.5, clearance=1, offset=3)
         plot_path_transforms(demo.get_path_as_transforms())
 
