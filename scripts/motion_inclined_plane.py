@@ -39,6 +39,7 @@ import time
 
 # Capstone specific imports
 from path_plans import DetectedObject
+from path_plans import SteppedRings
 from path_plans import InclinedPlane
 
 import numpy as np
@@ -374,9 +375,10 @@ def main():
         ## PLANNING ##
         # Example detected object definition
         object_size = [0.14, 0.06, 0.04]
-        object_posn = [0.50, 0.0, 0.4]
+        object_posn = [0.46, 0.0, 0.32]
         rot_z = 0
-        demo_blade = InclinedPlane(object_size, object_posn, rot_z)
+        demo_blade = InclinedPlane(object_size, object_posn, np.identity(3), count=(3,3), slope=0.2, clearance=0.05, offset=0)
+        #demo_blade = SteppedRings(object_size, object_posn, np.identity(3), scale=1.0, offset=0.01, level_count=2, density=5)
 
         # Add Object to Collision Planning Space
         robot.add_box_object(object_posn, object_size)
@@ -392,11 +394,10 @@ def main():
         try:
             for msg in demo_blade.path_as_messages:  #Debugging. Only doing first 5 poses poseList[0:5]
                 print(msg)
-                # todo: @Adam to make updates this loop and verify that it pulls the position
-                # todo: and orientation properly
                 # robot.add_sphere_object(msg["position"], radius)
+                # pose_msg = robot.rosmsg_geoPose(msg)  #Unneeded line if already in message format. Including for example only.
                 robot.goto_Quant_Orient(msg)
-                time.sleep(0.2)
+                #time.sleep(2)
         except KeyboardInterrupt:
             return
 
