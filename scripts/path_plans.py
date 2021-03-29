@@ -93,18 +93,27 @@ class DetectedObject(object):
         dictionary per: http://docs.ros.org/en/jade/api/geometry_msgs/html/msg/Pose.html
 
         Each element in the returned list looks like:
-        msg = {'Point': [x, y, z], 'Quaternion': [x, y, z, w]}
+        msg = {'Position': [x, y, z], 'Orientation': [x, y, z, w]}
 
         @param path_poses: List of poses as [x, y, z, qx, qy, qz, qw]
         @return: list of poses formatted as a dictionary
         """
+        import geometry_msgs.msg
+
         path_messages = []
+        #pose_template = geometry_msgs.msg.Pose()
+
         for pose in path_poses:
-            msg = {
-                'Point': pose[:3],
-                'Quaternion': pose[3:]
-            }
-            path_messages.append(msg.copy())
+            pose_goal               = geometry_msgs.msg.Pose()
+            pose_goal.position.x    = pose[0]
+            pose_goal.position.y    = pose[1]
+            pose_goal.position.z    = pose[2]
+            pose_goal.orientation.x = pose[3]
+            pose_goal.orientation.y = pose[4]
+            pose_goal.orientation.z = pose[5]
+            pose_goal.orientation.w = pose[6]
+
+            path_messages.append(pose_goal)
 
         return path_messages
 
