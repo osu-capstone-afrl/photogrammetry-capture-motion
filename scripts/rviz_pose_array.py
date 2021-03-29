@@ -130,7 +130,7 @@ def main():
     ## Visualization in RVIZ
     # Generate PoseArray for ROS Node Publisher
     pose_geom = [rosmsg_geoPose([object_posn[0],object_posn[1],object_posn[2],0,0,0,0])]
-    for i in demo_blade._path_pose:
+    for i in demo_blade.path_as_poses:
         pose_geom.append(rosmsg_geoPose(i))
 
     # Try launching ros node

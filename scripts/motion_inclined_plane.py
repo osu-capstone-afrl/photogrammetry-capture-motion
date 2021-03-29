@@ -41,6 +41,8 @@ import time
 from path_plans import DetectedObject
 from path_plans import InclinedPlane
 
+import numpy as np
+
 ## Quaternion Tools
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
@@ -388,7 +390,7 @@ def main():
         radius = 0.005
 
         try:
-            for msg in demo_blade.pose_and_orientation:  #Debugging. Only doing first 5 poses poseList[0:5]
+            for msg in demo_blade.path_as_messages:  #Debugging. Only doing first 5 poses poseList[0:5]
                 print(msg)
                 # todo: @Adam to make updates this loop and verify that it pulls the position
                 # todo: and orientation properly
