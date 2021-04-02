@@ -20,130 +20,137 @@
 #####################################################
 
 import numpy as np
+from typing import Union
+from typing import List
 
 
-class transformations:
-  """
-  Class Container for Rigid Body Transformations.
-  .. Requires numpy module to be imported as np
-  """
+class Transformations:
+    """ Container for Rigid Body Transformations """
+    @staticmethod
+    def get_transformation(rotation, translation):
+        # type: (np.ndarray, Union[List[float], np.ndarray]) -> np.ndarray
+        """ Formats separate rotation and translation matrices into one homogeneous transformation
+        matrix.
 
-  def generateTransMatrix(self, matr_rotate, matr_translate):
-    """
-    Convenience Function which accepts two inputs to output a Homogeneous Transformation Matrix
-    Intended to function for 3-dimensions frames ONLY
-    :param matr_rotate: 3x3 Rotational Matrix
-    :param matr_translate: 3x1 Translation Vector (x;y;z)
-    :return Homogeneous Transformation Matrix (4x4)
-    """
+        @param rotation:    3x3 rotational matrix
+        @param translation: 3x1 translation vector, list or np.ndarray
 
-    ## If Translation Matrix is List, Convert
-    if type(matr_translate) is list:
-      matr_translate = np.matrix(matr_translate)
-      #print("Changed translation vector from input 'list' to 'np.matrix'")           #TODO Commented out for debugging
+        @return: 4x4 homogeneous transformation matrix
+        """
 
-    ## Evaluate Inputs. Check if acceptable size.
-    if not matr_rotate.shape == (3, 3):
-      raise Exception("Error Generating Transformation Matrix. Incorrectly sized inputs.")
-    if not matr_translate.size == 3:
-      raise Exception("Error Generating Transformation Matrix. Translation Vector wrong size.")
+        if type(translation) is list:
+            translation = np.array(translation)
 
-    ## Reformat Inputs to common shape
-    if matr_translate.shape == (1, 3):
-      matr_translate = np.transpose(matr_translate)
-      #print("Transposed input translation vector")                                   #TODO Commented out for debugging
+        if not rotation.shape == (3, 3):
+            raise Exception("Error Generating Transformation Matrix. Rotation must be np.ndarray sized 3x3.")
+        if not translation.size == 3:
+            raise Exception("Error Generating Transformation Matrix. Translation Vector wrong size.")
 
-    ## Build Homogeneous Transformation matrix using reformatted inputs
-    # Currently includes flexibility to different sized inputs. Wasted process time, but flexible for future.
-    # Assigns bottom right corner as value '1'
-    new_transformMatrix = np.zeros((4,4))
-    new_transformMatrix[0:0+matr_rotate.shape[0], 0:0+matr_rotate.shape[1]] = matr_rotate
-    new_transformMatrix[0:0+matr_translate.shape[0], 3:3+matr_translate.shape[1]] = matr_translate
-    new_transformMatrix[new_transformMatrix.shape[0]-1,new_transformMatrix.shape[1]-1] = 1
+        translation = translation.reshape((3,1))
 
-    ## Return result
-    return new_transformMatrix
+        top = np.concatenate((rotation, translation),axis=1)
+        bottom = np.array([[0., 0., 0., 1.]])
+        transform_matrix = np.concatenate((top, bottom),axis=0)
 
-  def convertPath2FixedFrame(self, path_body, frame_body, frame_fixed=np.identity((4))):
-    """
-    Function for mapping a Path (type: List) onto a Fixed Frame (np. Homogenous Matrix)
-    :param path_body: Python List of Transformation Matrices for each point along a path
-    :param frame_body: Transformation matrix for the body
-    :param frame_fixed: Defaults to Identity Matrix (or robot's fixed frame)
-    """
+        return transform_matrix
 
-    ## Find Arb Frame Defined By Fixed Frame
-    frame_b2f = np.matmul(frame_body, frame_fixed)  #Pre-Multiply bc wrt fixed frame
+    @staticmethod
+    def create_rotation_matrix(rotations='', order=[]):
+        # type: (List[float], str) -> np.ndarray
+        """
+        Creates a rotation matrix from a list of angles and order. If called without arguments
+        it returns the identity matrix.
 
-    ## Convert Path Frames to be defined by Fixed Frame
-    path_fixed = []
-    for point in path_body:
-      path_fixed.append(np.matmul(frame_b2f, point))
+        @param rotations: List [x, y, z] of how much to rotate on each fixed-frame axis in radians
+        @param order:     String showing order to rotate in (e.g., 'xzy' or 'xyz')
 
-    return path_fixed
+        @return: 3x3 rotation matrix
+        """
+        rotation_matrix = np.identity(3)
+        for i, c in enumerate(order):
+            theta = rotations[i]
+            if c == 'x':
+                rot = np.array([[1, 0, 0],\
+                                [0, np.cos(theta), -1*np.sin(theta)],\
+                                [0, np.sin(theta), np.cos(theta)]])
+            elif c == 'y':
+                rot = np.array([[np.cos(theta), 0, np.sin(theta)],\
+                                [0, 1, 0],\
+                                [-1*np.sin(theta), 0, np.cos(theta)]])
+            else:
+                rot = np.array([[np.cos(theta), -1*np.sin(theta), 0],\
+                                [np.sin(theta), np.cos(theta), 0],\
+                                [0, 0, 1]])
 
-  def convertPath2RobotPose(self, path):
-    """
-    Convert Path (transforms) to List of Robot Poses (xyz,quants)
-    Function based upon math in...
-    https://en.wikipedia.org/wiki/Rotation_matrix#Quaternion
-    :param path: List of Homogeneous Transformations
-    :return: List of Robot Poses
-    """
+            # todo check multiplication order
+            rotation_matrix = np.matmul(rot, rotation_matrix)
 
-    ## Imports
-    import numpy as np
+        return rotation_matrix
 
-    ## Loop through Path Transforms and convert to Poses
-    path_poses = []
-    for point in path:
+    # todo: possibly remove? Decision to be made by @ACBuynak
+    # previously convertPath2FixedFrame
+    @staticmethod
+    def convertPath2FixedFrame(path_body, frame_body, frame_fixed=np.identity((4))):
+        """
+        Function for mapping a Path (type: List) onto a Fixed Frame (np. Homogenous Matrix)
 
-      # Location Vector
-      x,y,z = point[:-1,3]
-      x = np.asscalar(x)
-      y = np.asscalar(y)
-      z = np.asscalar(z)
+        @param path_body: Python List of Transformation Matrices for each point along a path
+        @param frame_body: Transformation matrix for the body
+        @param frame_fixed: Defaults to Identity Matrix (or robot's fixed frame)
+        """
 
-      # Quant Calculation Support Variables
-      # Only find trace for the rotational matrix.
-      t = np.trace(point) - point[3,3]
-      r = np.sqrt(1+t)
+        ## Find Arb Frame Defined By Fixed Frame
+        frame_b2f = np.matmul(frame_body, frame_fixed)  #Pre-Multiply bc wrt fixed frame
 
-      # Primary Diagonal Elements
-      Qxx = point[0,0]
-      Qyy = point[1,1]
-      Qzz = point[2,2]
+        ## Convert Path Frames to be defined by Fixed Frame
+        path_fixed = []
+        for point in path_body:
+            path_fixed.append(np.matmul(frame_b2f, point))
 
-      ##TODO: Fix (invalid value warning) so copysign quant calculation handles imaginary values (or only uses real?)
-      #print(Qxx, Qyy, Qzz)
-      #print(np.real(np.sqrt(1 - Qxx - Qyy + Qzz)))
+        return path_fixed
 
-      # Quant Calculation
-      # Using np.lib.scimath.sqrt in lieu of np.sqrt as it returns imaginary components vs NaN
-      # np.absolute used to get magnitude of combined real + imaginary components 
-      qx = np.copysign(np.absolute(0.5 * np.lib.scimath.sqrt(1 + Qxx - Qyy - Qzz)), point[2,1]-point[1,2])
-      qy = np.copysign(np.absolute(0.5 * np.lib.scimath.sqrt(1 - Qxx + Qyy - Qzz)), point[0,2]-point[2,0])
-      qz = np.copysign(np.absolute(0.5 * np.lib.scimath.sqrt(1 - Qxx - Qyy + Qzz)), point[1,0]-point[0,1])
-      qw = 0.5*r
+    @staticmethod
+    def convert_transformations_to_poses(path_transformations):
+        # type: (List[np.ndarray]) -> List[List[float]]
+        """
+        Converts a path of homogenous transformations to a path of
+        poses (x, y, z, qx, qy, qz, qw)
 
-      if np.isnan(qx): qx = 0
-      if np.isnan(qy): qy = 0
-      if np.isnan(qz): qz = 0
+        Function based upon math in...
+        https://en.wikipedia.org/wiki/Rotation_matrix#Quaternion
 
-      path_poses.append( [x, y, z, qx,qy,qz, qw] )
+        @param path_transformations: List of Homogeneous Transformations
 
-    return path_poses
+        @return: List of Robot Poses in the form [x, y, z, qx, qy, qz, qw]
+        """
+        path_poses = []
+        for tf in path_transformations:
+            (x, y, z) = tf[0:3, -1]
+            (Qxx, Qyy, Qzz, _) = np.diag(tf)
+            t = np.trace(tf[:-1, :-1])
+            r = np.sqrt(1+t)
 
-##########################
+            # TODO: Fix (invalid value warning) so copysign quant calculation handles imaginary values (or only uses real?)
+            #  assigned to @ACBuynak
+            qx = np.copysign(np.absolute(0.5*np.lib.scimath.sqrt(1 + Qxx - Qyy - Qzz)), tf[2, 1]-tf[1, 2])
+            qy = np.copysign(np.absolute(0.5*np.lib.scimath.sqrt(1 - Qxx + Qyy - Qzz)), tf[0, 2]-tf[2, 0])
+            qz = np.copysign(np.absolute(0.5*np.lib.scimath.sqrt(1 - Qxx - Qyy + Qzz)), tf[1, 0]-tf[0, 1])
+            qw = 0.5*r
 
+            qx = 0 if np.isnan(qx) else qx
+            qy = 0 if np.isnan(qy) else qy
+            qz = 0 if np.isnan(qz) else qz
+
+            path_poses.append([x, y, z, qx, qy, qz, qw])
+
+        return path_poses
+
+
+# todo Remove or refactor this code. For @ACBuynak
 def main():
-  print("-- DEMO ONLY --\nACTUAL TOOLS STORED IN 'transformations' CLASS\n")
+  print "-- DEMO ONLY --\nACTUAL TOOLS STORED IN 'transformations' CLASS\n"
 
-  ## Imports
-  import numpy as np
-
-  ## Instantiate Class
-  tf = transformations()
+  tf = Transformations()
 
 
   ## Fixed Frame (robot base_link frame)

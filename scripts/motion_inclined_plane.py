@@ -39,7 +39,10 @@ import time
 
 # Capstone specific imports
 from path_plans import DetectedObject
+from path_plans import SteppedRings
 from path_plans import InclinedPlane
+
+import numpy as np
 
 ## Quaternion Tools
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
@@ -156,9 +159,7 @@ class moveManipulator(object):
     def goto_Quant_Orient(self,msg_geoPose):
         ## GOTO Pose Using Cartesian + Quaternion Pose
 
-        pose_goal = self.rosmsg_geoPose(msg_geoPose)
-
-        self.move_group.set_pose_target(pose_goal)
+        self.move_group.set_pose_target(msg_geoPose)
 
         ## Call the planner to compute the plan and execute it.
         plan = self.move_group.go(wait=True)
@@ -172,7 +173,7 @@ class moveManipulator(object):
 
         # For testing:
         current_pose = self.move_group.get_current_pose().pose
-        return all_close(pose_goal, current_pose, 0.01)
+        return all_close(msg_geoPose, current_pose, 0.01)
 
     def rosmsg_geoPose(self,pose):
         ## Recieves dictionary and list formats and returns a tf2.geom.pose message
@@ -183,45 +184,46 @@ class moveManipulator(object):
         #print(q_poseCurrent)
 
         # Using Quaternion's for Angle
+        # todo: Add these lines to Wiki documentation and remove from code
         # Conversion from Euler(rotx,roty,rotz) to Quaternion(x,y,z,w)
         # Euler Units: RADIANS
         # http://docs.ros.org/en/melodic/api/tf/html/python/transformations.html
         # http://wiki.ros.org/tf2/Tutorials/Quaternions
         # http://docs.ros.org/en/api/geometry_msgs/html/msg/Quaternion.html
 
-        if isinstance(pose,dict):
-            q_orientGoal = quaternion_from_euler(pose['euler'][0],pose['euler'][1],pose['euler'][2],axes='sxyz')
-
-            pose_goal = geometry_msgs.msg.Pose()
-            pose_goal.position.x = pose['position'][0]
-            pose_goal.position.y = pose['position'][1]
-            pose_goal.position.z = pose['position'][2]
-            #pose_goal.orientation.x = pose['quaternion'][0]
-            #pose_goal.orientation.y = pose['quaternion'][1]
-            #pose_goal.orientation.z = pose['quaternion'][2]
-            #pose_goal.orientation.w = pose['quaternion'][3]
-
-            # Reorganize Data into Output Format
-            pose_goal.orientation.x = q_orientGoal[0]
-            pose_goal.orientation.y = q_orientGoal[1]
-            pose_goal.orientation.z = q_orientGoal[2]
-            pose_goal.orientation.w = q_orientGoal[3]
-
-        elif isinstance(pose,list):
-            # Convert Euler Orientation Request to Quanternion
-            q_orientGoal = quaternion_from_euler(pose[3],pose[4],pose[5],axes='sxyz')
-
+        if isinstance(pose, geometry_msgs.msg.Pose):
+            # No conversion needed, already in ROS Message Format
+            pose_goal = pose
+        
+        elif isinstance(pose, list):
+            print(">> List Type")
             pose_goal = geometry_msgs.msg.Pose()
             pose_goal.position.x = pose[0]
             pose_goal.position.y = pose[1]
             pose_goal.position.z = pose[2]
-            pose_goal.orientation.x = q_orientGoal[0]
-            pose_goal.orientation.y = q_orientGoal[1]
-            pose_goal.orientation.z = q_orientGoal[2]
-            pose_goal.orientation.w = q_orientGoal[3]
+
+            if len(pose) == 6:
+                # Assuming Euler-based Pose List
+                # Convert Euler Orientation Request to Quanternion
+                # http://docs.ros.org/en/melodic/api/tf/html/python/transformations.html
+                q_orientGoal = quaternion_from_euler(pose[3],pose[4],pose[5],axes='sxyz')
+                pose_goal.orientation.x = q_orientGoal[0]
+                pose_goal.orientation.y = q_orientGoal[1]
+                pose_goal.orientation.z = q_orientGoal[2]
+                pose_goal.orientation.w = q_orientGoal[3]
+
+            if len(pose) == 7:
+                # Assuming Quant-based Pose List
+                q_orientGoal = pose[-4:]
+                pose_goal.orientation.x = q_orientGoal[0]
+                pose_goal.orientation.y = q_orientGoal[1]
+                pose_goal.orientation.z = q_orientGoal[2]
+                pose_goal.orientation.w = q_orientGoal[3]
 
         else:
-            print("---> Incorrect Input Format")
+            #Assuming type is already in message format
+            print(">> ! Error. Message is neither type")
+            pose_goal = False
 
         return pose_goal
 
@@ -373,9 +375,10 @@ def main():
         ## PLANNING ##
         # Example detected object definition
         object_size = [0.14, 0.06, 0.04]
-        object_posn = [0.50, 0.0, 0.4]
+        object_posn = [0.46, 0.0, 0.32]
         rot_z = 0
-        demo_blade = InclinedPlane(object_size, object_posn, rot_z)
+        demo_blade = InclinedPlane(object_size, object_posn, np.identity(3), count=(3,3), slope=0.2, clearance=0.05, offset=0)
+        #demo_blade = SteppedRings(object_size, object_posn, np.identity(3), scale=1.0, offset=0.01, level_count=2, density=5)
 
         # Add Object to Collision Planning Space
         robot.add_box_object(object_posn, object_size)
@@ -389,13 +392,12 @@ def main():
         radius = 0.005
 
         try:
-            for msg in demo_blade.pose_and_orientation:  #Debugging. Only doing first 5 poses poseList[0:5]
+            for msg in demo_blade.path_as_messages:  #Debugging. Only doing first 5 poses poseList[0:5]
                 print(msg)
-                # todo: @Adam to make updates this loop and verify that it pulls the position
-                # todo: and orientation properly
                 # robot.add_sphere_object(msg["position"], radius)
+                # pose_msg = robot.rosmsg_geoPose(msg)  #Unneeded line if already in message format. Including for example only.
                 robot.goto_Quant_Orient(msg)
-                time.sleep(0.2)
+                #time.sleep(2)
         except KeyboardInterrupt:
             return
 

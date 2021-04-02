@@ -18,37 +18,38 @@
 # Author: Adam Buynak
 
 #####################################################
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 def plot_path_transforms(d2p):
-  import numpy as np
-  import matplotlib.pyplot as plt
-  from mpl_toolkits.mplot3d import Axes3D
+    from mpl_toolkits.mplot3d import Axes3D
 
-  fig = plt.figure()
-  ax = fig.add_subplot(111, projection='3d')
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
 
-  # Origin
-  ax.scatter(0, 0, 0)  # origin
+    # Origin
+    ax.scatter(0, 0, 0)  # origin
 
-  # Collect Array of Just Vectors
-  vectors = np.zeros((len(d2p),3))
-  for i, transform in enumerate(d2p):
-    vectors[i,:] = transform[:-1,3]
-  #print(vectors)
+    # Collect Array of Just Vectors
+    vectors = np.zeros((len(d2p),3))
+    for i, transform in enumerate(d2p):
+        vectors[i, :] = transform[:-1, 3]
 
-  # Path Plotted
-  for p in d2p:
-    ax.scatter(p[0,3], p[1,3], p[2,3], marker="x")
-  ax.plot(vectors[:, 0], vectors[:, 1], vectors[:, 2], color='b')
+    # print(vectors)
 
-  # Assign Labels
-  ax.set_xlabel('X-Axis')
-  ax.set_ylabel('Y-Axis')
-  ax.set_zlabel('Z-Axis')
+    # Path Plotted
+    for p in d2p:
+        ax.scatter(p[0, 3], p[1, 3], p[2, 3], marker="x")
+    ax.plot(vectors[:, 0], vectors[:, 1], vectors[:, 2], color='b')
 
-  # Display Plot
-  plt.show()
+    # Assign Labels
+    ax.set_xlabel('X-Axis')
+    ax.set_ylabel('Y-Axis')
+    ax.set_zlabel('Z-Axis')
 
-  # Close Figure
-  #plt.close()
+    # Display Plot
+    plt.show()
+
+    # Close Figure
+    #plt.close()

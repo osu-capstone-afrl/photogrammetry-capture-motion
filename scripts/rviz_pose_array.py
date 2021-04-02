@@ -117,20 +117,19 @@ def main():
     
     # Example detected object definition
     # copied from motion_inclined_plane.py.. duplicate
-    object_size = [0.2, 0.2, 0.5]
-    object_posn = [0, 0, 0]
+    object_size = [0.14, 0.06, 0.04]
+    object_posn = [0.46, 0.0, 0.32]
     
     ## Sample Use: Inclined Plane
-    #rot_z = 0
-    #demo_blade = InclinedPlane(object_size, object_posn, rot_z)
+    demo_blade = InclinedPlane(object_size, object_posn, np.identity(3), count=(3,3), slope=0.2, clearance=0.05, offset=0)
 
     ## Sample Use: Stepped Rings
-    demo_blade = SteppedRings(object_size, object_posn, np.identity(3), level_count=2, density=8)
+    #demo_blade = SteppedRings(object_size, object_posn, np.identity(3), scale=1.1, offset=0.01, level_count=2, density=5)
 
     ## Visualization in RVIZ
     # Generate PoseArray for ROS Node Publisher
     pose_geom = [rosmsg_geoPose([object_posn[0],object_posn[1],object_posn[2],0,0,0,0])]
-    for i in demo_blade._path_pose:
+    for i in demo_blade.path_as_poses:
         pose_geom.append(rosmsg_geoPose(i))
 
     # Try launching ros node
