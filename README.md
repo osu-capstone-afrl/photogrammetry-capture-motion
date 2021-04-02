@@ -31,6 +31,8 @@ sudo apt-get update
 cd [PATH/TO/YOUR/WORKSPACE]
 # Install all dependencies of packages in the workspace
 rosdep install --from-paths src --ignore-src -r -y
+# Install all python dependencies
+pip install -r requirements.txt
 # Build your workspace
 catkin build
 source devel/setup.bash
