@@ -101,7 +101,6 @@ class DetectedObject(object):
         import geometry_msgs.msg
 
         path_messages = []
-        #pose_template = geometry_msgs.msg.Pose()
 
         for pose in path_poses:
             pose_goal               = geometry_msgs.msg.Pose()
