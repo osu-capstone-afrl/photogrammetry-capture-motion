@@ -1,0 +1,13 @@
+<launch>
+
+    <!-- Connect to GP7 robot -->
+    <include file="$(find robot_gp7_d5600_moveit_config)/launch/moveit_planning_execution.launch" >
+        <arg name="sim" default="false" />
+        <arg name="robot_ip" unless="$(arg sim)" default="192.168.1.31" />
+        <arg name="controller" unless="$(arg sim)" default="fs100" />
+    </include>
+
+    <!-- Enable Robot Servos -->
+    <node pkg="rosservice" type="rosservice" name="robot_enable" args="call --wait /robot_enable"/>
+
+</launch>
