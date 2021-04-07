@@ -1,7 +1,10 @@
+#!/usr/bin/env python
+
 from robot_support import moveManipulator
 from transformations import Transformations
 from path_plans import InclinedPlane
 from path_plans import SteppedRings
+import geometry_msgs.msg
 import rospy
 import time
 import sys
@@ -10,7 +13,7 @@ import os
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(parent)
-from camera import capture_photo
+#from camera import capture_photo
 
 
 if __name__ == '__main__':
@@ -27,8 +30,8 @@ if __name__ == '__main__':
         ## SETUP ##
         # Initial Values & Controls
         robot = moveManipulator()
-        robot.set_accel(0.2)
-        robot.set_vel(0.2)
+        robot.set_accel(0.1)
+        robot.set_vel(0.1)
 
         # Move to Known Start Position: All-Zeros
         #raw_input('Go to All-Zeros Position <enter>')
@@ -38,16 +41,16 @@ if __name__ == '__main__':
         # Example detected object definition
         tf = Transformations()
 
-        size = [0.14, 0.06, 0.04]
-        locator = [0.46, 0.0, 0.32]
+        size = [0.06, 0.06, 0.06]
+        locator = [0.46, 0.0, 0.4]
         orientation = tf.create_rotation_matrix([0],'z')
 
         # Add Object to Collision Planning Space
         robot.add_box_object(locator, size)
 
         # create path plan
-        plan = InclinedPlane(size, locator, orientation)
-        # plan = SteppedRings(size, locator, orientation)
+        # plan = InclinedPlane(size, locator, orientation)
+        plan = SteppedRings(size, locator, orientation, scale=1.1, offset=0.2, level_count=5, density=10)
 
         # Attempt Incline Plane Motion
         print("\nEXECUTE INCLINED PLANES RASTER MOTION")
@@ -56,8 +59,8 @@ if __name__ == '__main__':
             for msg in plan.path_as_messages:
                 robot.goto_Quant_Orient(msg)
                 time.sleep(1)
-                capture_photo()
-                time.sleep(1)
+                # capture_photo()
+                # time.sleep(1)
         except KeyboardInterrupt:
             exit()
 
