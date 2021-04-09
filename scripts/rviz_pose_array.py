@@ -114,17 +114,20 @@ def main():
     from path_plans import DetectedObject
     from path_plans import InclinedPlane
     from path_plans import SteppedRings
+    from transformations import Transformations
     
     # Example detected object definition
     # copied from motion_inclined_plane.py.. duplicate
-    object_size = [0.14, 0.06, 0.04]
-    object_posn = [0.46, 0.0, 0.32]
-    
+    object_size = [0.06, 0.14, 0.14]
+    object_posn = [0.48, 0.0, 0.32]
+    tf = Transformations()
+    orientation = tf.create_rotation_matrix([0],'z')
+
     ## Sample Use: Inclined Plane
-    demo_blade = InclinedPlane(object_size, object_posn, np.identity(3), count=(3,3), slope=0.2, clearance=0.05, offset=0)
+    # demo_blade = InclinedPlane(object_size, object_posn, np.identity(3), count=(3,3), slope=0.2, clearance=0.06, offset=0.02)
 
     ## Sample Use: Stepped Rings
-    #demo_blade = SteppedRings(object_size, object_posn, np.identity(3), scale=1.1, offset=0.01, level_count=2, density=5)
+    demo_blade = SteppedRings(object_size, object_posn, orientation, scale=1.01, offset=0.01, level_count=2, density=7)
 
     ## Visualization in RVIZ
     # Generate PoseArray for ROS Node Publisher

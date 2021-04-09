@@ -41,16 +41,22 @@ if __name__ == '__main__':
         # Example detected object definition
         tf = Transformations()
 
-        size = [0.06, 0.06, 0.06]
-        locator = [0.46, 0.0, 0.4]
+        # size = [0.06, 0.06, 0.06]
+        # locator = [0.46, 0.0, 0.4]
+        object_size = [0.06, 0.14, 0.14]
+        object_posn = [0.48, 0.0, 0.32]
+
         orientation = tf.create_rotation_matrix([0],'z')
 
         # Add Object to Collision Planning Space
-        robot.add_box_object(locator, size)
+        robot.add_box_object(object_posn, object_size)
+
+        import numpy as np
 
         # create path plan
         # plan = InclinedPlane(size, locator, orientation)
-        plan = SteppedRings(size, locator, orientation, scale=1.1, offset=0.2, level_count=5, density=10)
+        # plan = InclinedPlane(object_size, object_posn, np.identity(3), count=(3,3), slope=0.2, clearance=0.06, offset=0.02)
+        plan = SteppedRings(object_size, object_posn, orientation, scale=1.01, offset=0.01, level_count=2, density=7)
 
         # Attempt Incline Plane Motion
         print("\nEXECUTE INCLINED PLANES RASTER MOTION")
