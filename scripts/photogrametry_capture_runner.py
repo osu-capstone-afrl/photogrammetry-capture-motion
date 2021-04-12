@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
         ## SETUP ##
         # Initial Values & Controls
-        robot = moveManipulator()
+        robot = moveManipulator(input_planning_group = "eef_camera")
         robot.set_accel(0.1)
         robot.set_vel(0.1)
 

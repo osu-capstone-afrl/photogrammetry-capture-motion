@@ -77,7 +77,7 @@ def all_close(goal, actual, tolerance):
 class moveManipulator(object):
     """moveManipulator Class"""
 
-    def __init__(self):
+    def __init__(self, input_planning_group):
         super(moveManipulator, self).__init__()
 
         ## First initialize `moveit_commander`_ and a `rospy`_ node:
@@ -88,7 +88,7 @@ class moveManipulator(object):
         self.glider_name = ''
         self.robot = moveit_commander.RobotCommander()
         self.scene = moveit_commander.PlanningSceneInterface()
-        self.group_name = "bot_gp7"
+        self.group_name = input_planning_group
         self.move_group = moveit_commander.MoveGroupCommander(self.group_name)
         self.display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path',
                                                             moveit_msgs.msg.DisplayTrajectory,

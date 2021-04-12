@@ -118,9 +118,10 @@ def main():
     
     # Example detected object definition
     # copied from motion_inclined_plane.py.. duplicate
+    tf = Transformations()
     object_size = [0.06, 0.14, 0.14]
     object_posn = [0.48, 0.0, 0.32]
-    tf = Transformations()
+
     orientation = tf.create_rotation_matrix([0],'z')
 
     ## Sample Use: Inclined Plane
