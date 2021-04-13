@@ -24,7 +24,7 @@ The following section explains how to setup the package to work.
 ### Dependencies
 To automatically install any missing dependencies of your ROS installation, run the following terminal commands:
 
-```
+```shell
 #---------- install third party dependencies -----------
 sudo apt-get update
 # Move to the root of the workspace
@@ -32,7 +32,7 @@ cd [PATH/TO/YOUR/WORKSPACE]
 # Install all dependencies of packages in the workspace
 rosdep install --from-paths src --ignore-src -r -y
 # Install all python dependencies
-pip install -r requirements.txt
+pip install -r src/photogrammetry-capture-motion/requirements.txt
 # Build your workspace
 catkin build
 source devel/setup.bash
@@ -42,7 +42,7 @@ Once the workspace build process is completed you are ready to start playing...c
 #### Install missing dependencies
 If the build fails, it occurs usually to missing package dependencies or missing third party (non-ros) packages. When this occurs the build log in the terminal indicates the name of the package dependency that it is missing, then try:
 
-```
+```shell
 sudo apt-get update ros-kinetic-[package-name]
 # separate the package name words with a '-'
 ```
@@ -50,7 +50,7 @@ If a package is not found it is probably a third-party dependency, google the na
 
 ## Usage
 
-```
+```shell
 roslaunch motoman_gp7_moveit_config moveit_planning_execution.launch sim:=true
 rosrun photogrammetry-capture-motion motion_inclined_plane.py
 ```
