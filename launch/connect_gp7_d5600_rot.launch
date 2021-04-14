@@ -1,0 +1,10 @@
+<launch>
+
+    <!-- Connect to GP7 robot w/ Camera Rotated -->
+    <include file="$(find robot_gp7_d5600_rot_moveit_config)/launch/moveit_planning_execution.launch" >
+        <arg name="sim" default="false" />
+        <arg name="robot_ip" default="192.168.1.31" />
+        <arg name="controller" default="yrc1000" />
+    </include>
+
+</launch>
