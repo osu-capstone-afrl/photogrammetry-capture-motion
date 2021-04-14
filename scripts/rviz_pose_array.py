@@ -142,7 +142,7 @@ def main():
         orientation = np.array(detected_object['orientation'])
 
         if detected_object['type'] == 'steppedrings':
-            demo_blade = SteppedRings(object_size, object_posn, orientation, scale=1.01, offset=0.01, level_count=2, density=7)
+            demo_blade = SteppedRings(object_size, object_posn, orientation) #, scale=1.01, offset=0.01, level_count=2, density=7)
         else:
             print 'Warning: invalid path type in rviz_pose_array.py'
 
