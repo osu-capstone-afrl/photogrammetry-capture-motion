@@ -59,7 +59,8 @@ class Transformations:
         # type: (List[float], str) -> np.ndarray
         """
         Creates a rotation matrix from a list of angles and order. If called without arguments
-        it returns the identity matrix.
+        it returns the identity matrix. Rotations are done relative to the fixed frame, not the
+        current frame.
 
         @param rotations: List [x, y, z] of how much to rotate on each fixed-frame axis in radians
         @param order:     String showing order to rotate in (e.g., 'xzy' or 'xyz')
@@ -82,7 +83,6 @@ class Transformations:
                                 [np.sin(theta), np.cos(theta), 0],\
                                 [0, 0, 1]])
 
-            # todo check multiplication order
             rotation_matrix = np.matmul(rot, rotation_matrix)
 
         return rotation_matrix
