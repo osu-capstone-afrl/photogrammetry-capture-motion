@@ -7,6 +7,12 @@
 # Author: Adam Buynak                               #
 #####################################################
 
+import numpy as np
+from path_plans import DetectedObject
+from path_plans import InclinedPlane
+from path_plans import SteppedRings
+from path_plans import OrthogonalCapture
+from transformations import Transformations
 import json
 import os
 import rospy
@@ -111,13 +117,7 @@ def node_cameraPoseArray(inputArray):
 
 #####################################################
 ## MAIN CODE ##
-def main():
-    import numpy as np
-    from path_plans import DetectedObject
-    from path_plans import InclinedPlane
-    from path_plans import SteppedRings
-    from transformations import Transformations
-    
+def main():    
     # Example detected object definition
     if False:
         tf = Transformations()
