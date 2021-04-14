@@ -203,11 +203,11 @@ class OrthogonalCapture(DetectedObject):
         Usage: automatically called by __init__
         """
         above_position = np.array([0.45, 0, 0.7])
-        above_rotation = self.tf.create_rotation_matrix(np.pi/2, 'x')
+        above_rotation = self.tf.create_rotation_matrix([np.pi], 'x')
         above_tf = self.tf.get_transformation(above_rotation, above_position)
 
-        side_position = np.array([0.45, 35, 0.15])
-        side_rotation = np.identity(3)
+        side_position = np.array([0.45, 0.35, 0.15])
+        side_rotation = self.tf.create_rotation_matrix([-0.5*np.pi, 0.5*np.pi], 'yz')
         side_tf = self.tf.get_transformation(side_rotation, side_position)
 
         path_as_transforms = [above_tf, side_tf]
