@@ -162,6 +162,59 @@ class DetectedObject(object):
         return rot_matrix
 
 
+class OrthogonalCapture(DetectedObject):
+    """A container for the orthogonal image capture path plan"""
+    def __init__(self, size, locator, orientation):
+        # type: (List[float], List[float], np.ndarray) -> None
+        """Initialization function
+
+        @param size:        list[x,y,z] dimensions of presented part
+        @param locator:     center of presented part in world frame coordinates
+        @param orientation: rotation of presented part in world frame coordinates
+        """
+
+        # todo: These values are hard coded right now. There really ought to be a better way to do
+        #       this. Just a note for the future
+
+        print '[ Info] In path_plans.py the positions in the OrthogonalCapture class are hardcoded. ' \
+              'Future updates should fix this.'
+
+        super(OrthogonalCapture, self).__init__(size, locator, orientation)
+
+        ''' OVERWRITE THESE VARIABLES IN YOUR PATH PLAN '''
+        # Holds path as a list of transformations relative to _global_origin (0,0,0)
+        self.path_as_transforms = self._setup_path()
+
+        # Holds path to Robot Poses (outputs a list of vectors x,y,z,qx,qy,qz,qw)
+        self.path_as_poses = self.tf.convert_transformations_to_poses(self.path_as_transforms)
+
+        # Holds path as a list of dictionaries holding ROS pose messages
+        # see http://docs.ros.org/en/jade/api/geometry_msgs/html/msg/Pose.html
+        # [{'Point': [x, y, z], 'Quaternion': [qx, qy, qz, qw]}]
+        self.path_as_messages = self._convert_poses_to_messages(self.path_as_poses)
+
+    def _setup_path(self):
+        # type: () -> List[np.ndarray]
+        """
+        Creates a list of path transformations that position the camera around
+        the part and orient the Z-axis towards the part's center location with the
+        Y-axis parallel to the XY plane and X-axis pointing up.
+
+        Usage: automatically called by __init__
+        """
+        above_position = np.array([0.45, 0, 0.7])
+        above_rotation = self.tf.create_rotation_matrix(np.pi/2, 'x')
+        above_tf = self.tf.get_transformation(above_rotation, above_position)
+
+        side_position = np.array([0.45, 35, 0.15])
+        side_rotation = np.identity(3)
+        side_tf = self.tf.get_transformation(side_rotation, side_position)
+
+        path_as_transforms = [above_tf, side_tf]
+
+        return path_as_transforms
+
+
 class InclinedPlane(DetectedObject):
     """A container for the incline plane path plan"""
     def __init__(self, size, locator, orientation, count=(5, 5), clearance=0.25, plane_scale=(2, 2),\
