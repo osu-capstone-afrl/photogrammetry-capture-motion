@@ -3,6 +3,7 @@
 from robot_support import moveManipulator
 from path_plans import InclinedPlane
 from path_plans import SteppedRings
+from path_plans import OrthogonalCapture
 import numpy as np
 import geometry_msgs.msg
 import rospy
@@ -53,7 +54,8 @@ if __name__ == '__main__':
 
         # create path plan
         # plan = InclinedPlane(object_size, object_posn, np.identity(3), count=(3,3), slope=0.2, clearance=0.06, offset=0.02)
-        plan = SteppedRings(object_size, object_posn, orientation, scale=1.01, offset=0.01, level_count=2, density=7)
+        # plan = SteppedRings(object_size, object_posn, orientation, scale=1.01, offset=0.01, level_count=2, density=7)
+        plan = OrthogonalCapture(object_size, object_posn, orientation)
 
         # Attempt Incline Plane Motion
         print("\nEXECUTE INCLINED PLANES RASTER MOTION")
