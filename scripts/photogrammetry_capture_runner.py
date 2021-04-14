@@ -3,6 +3,7 @@
 from robot_support import moveManipulator
 from path_plans import InclinedPlane
 from path_plans import SteppedRings
+import numpy as np
 import geometry_msgs.msg
 import rospy
 import time
@@ -45,7 +46,7 @@ if __name__ == '__main__':
 
         object_size = detected_object['size']
         object_posn = detected_object['posn']
-        orientation = detected_object['orientation']
+        orientation = np.array(detected_object['orientation'])
 
         # Add Object to Collision Planning Space
         robot.add_box_object(object_posn, object_size)

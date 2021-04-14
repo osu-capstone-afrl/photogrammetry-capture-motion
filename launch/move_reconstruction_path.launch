@@ -1,6 +1,8 @@
 <launch>
 
-  <!-- TODO. Reorganize Motion Control Code. -->
-  <node pkg="photogrammetry-capture-motion" type="motion_code.py" name="motion_driver" output="screen" launch-prefix="gnome-terminal --command" />
+    <!-- Launch Python Scripts for Motion Control & Pose Array Using input JSON -->
+    <node pkg="photogrammetry-capture-motion" type="photogrammetry_capture_runner.py" name="motion_input" output="screen" launch-prefix="gnome-terminal --command" />
+
+    <node pkg="photogrammetry-capture-motion" type="rviz_pose_array.py" name="camera_positions_array" output="screen" />
 
 </launch>

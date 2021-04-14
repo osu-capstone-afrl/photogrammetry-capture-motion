@@ -7,6 +7,8 @@
 # Author: Adam Buynak                               #
 #####################################################
 
+import json
+import os
 import rospy
 import geometry_msgs.msg
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
@@ -117,18 +119,34 @@ def main():
     from transformations import Transformations
     
     # Example detected object definition
-    # copied from motion_inclined_plane.py.. duplicate
-    tf = Transformations()
-    object_size = [0.06, 0.14, 0.14]
-    object_posn = [0.48, 0.0, 0.32]
+    if False:
+        tf = Transformations()
+        object_size = [0.06, 0.14, 0.14]
+        object_posn = [0.48, 0.0, 0.32]
 
-    orientation = tf.create_rotation_matrix([0],'z')
+        orientation = tf.create_rotation_matrix([0],'z')
 
-    ## Sample Use: Inclined Plane
-    # demo_blade = InclinedPlane(object_size, object_posn, np.identity(3), count=(3,3), slope=0.2, clearance=0.06, offset=0.02)
+        ## Sample Use: Inclined Plane
+        # demo_blade = InclinedPlane(object_size, object_posn, np.identity(3), count=(3,3), slope=0.2, clearance=0.06, offset=0.02)
 
-    ## Sample Use: Stepped Rings
-    demo_blade = SteppedRings(object_size, object_posn, orientation, scale=1.01, offset=0.01, level_count=2, density=7)
+        ## Sample Use: Stepped Rings
+        demo_blade = SteppedRings(object_size, object_posn, orientation, scale=1.01, offset=0.01, level_count=2, density=7)
+    else:
+        current = os.path.dirname(os.path.realpath(__file__))
+        fname = os.path.join(current, "detected_object.json")
+        with open(fname, "r") as read_file:
+            detected_object = json.load(read_file)
+
+        object_size = detected_object['size']
+        object_posn = detected_object['posn']
+        orientation = np.array(detected_object['orientation'])
+
+        if detected_object['type'] == 'steppedrings':
+            demo_blade = SteppedRings(object_size, object_posn, orientation, scale=1.01, offset=0.01, level_count=2, density=7)
+        else:
+            print 'Warning: invalid path type in rviz_pose_array.py'
+
+
 
     ## Visualization in RVIZ
     # Generate PoseArray for ROS Node Publisher
