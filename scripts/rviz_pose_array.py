@@ -119,7 +119,8 @@ def node_cameraPoseArray(inputArray):
 ## MAIN CODE ##
 def main():    
     # Example detected object definition
-    if False:
+    # TODO: Eliniate theis hacky logic and put a proper way to load a desired json file
+    if False: # For manually defining the position in the code
         tf = Transformations()
         object_size = [0.06, 0.14, 0.14]
         object_posn = [0.48, 0.0, 0.32]
@@ -130,8 +131,8 @@ def main():
         # demo_blade = InclinedPlane(object_size, object_posn, np.identity(3), count=(3,3), slope=0.2, clearance=0.06, offset=0.02)
 
         ## Sample Use: Stepped Rings
-        demo_blade = SteppedRings(object_size, object_posn, orientation, scale=1.01, offset=0.01, level_count=2, density=7)
-    else:
+        demo_blade = SteppedRings(object_size, object_posn, orientation, scale=1.01, offset=0.1, level_count=2, density=7)
+    else: # for loading from the JSON file
         current = os.path.dirname(os.path.realpath(__file__))
         fname = os.path.join(current, "detected_object.json")
         with open(fname, "r") as read_file:
