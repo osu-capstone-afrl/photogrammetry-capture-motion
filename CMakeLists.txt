@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(photogrammetry-capture-motion)
+project(photogrammetry_capture_motion)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -109,7 +109,7 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS {THIS_PACKAGE_INCLUDE_DIRS}
-#  LIBRARIES photogrammetry-capture-motion
+#  LIBRARIES photogrammetry_capture_motion
   CATKIN_DEPENDS moveit_core moveit_visual_tools moveit_ros_planning_interface
 #  DEPENDS system_lib
 )
@@ -127,7 +127,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/photogrammetry-capture-motion.cpp
+#   src/${PROJECT_NAME}/photogrammetry_capture_motion.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -138,7 +138,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/photogrammetry-capture-motion_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/photogrammetry_capture_motion_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -202,7 +202,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_photogrammetry-capture-motion.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_photogrammetry_capture_motion.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

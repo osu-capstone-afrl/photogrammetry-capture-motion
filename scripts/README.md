@@ -104,13 +104,13 @@ The following table briefly summarizes the contents of this directory:
 
 | File Name                                                    | Contents                                                     |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| [`motion_inclined_plane.py`](https://github.com/osu-capstone-afrl/photogrammetry-capture-motion/blob/melodic/scripts/motion_inclined_plane.py) | Demonstration of code                                        |
-| [`path_plans.py`](https://github.com/osu-capstone-afrl/photogrammetry-capture-motion/blob/melodic/scripts/path_plans.py) | Contains all path plans                                      |
-| [`shapes.py`](https://github.com/osu-capstone-afrl/photogrammetry-capture-motion/blob/melodic/scripts/shapes.py) | Defines basic geometries (e.g., planes) which path plans are built from |
+| [`motion_inclined_plane.py`](https://github.com/osu-capstone-afrl/photogrammetry_capture_motion/blob/melodic/scripts/motion_inclined_plane.py) | Demonstration of code                                        |
+| [`path_plans.py`](https://github.com/osu-capstone-afrl/photogrammetry_capture_motion/blob/melodic/scripts/path_plans.py) | Contains all path plans                                      |
+| [`shapes.py`](https://github.com/osu-capstone-afrl/photogrammetry_capture_motion/blob/melodic/scripts/shapes.py) | Defines basic geometries (e.g., planes) which path plans are built from |
 |  |  |
-| [`transformations.py`](https://github.com/osu-capstone-afrl/photogrammetry-capture-motion/blob/melodic/scripts/transformations.py) | Tool Class for creating, manipulating, and converting Homogeneous Transformation Matrixes (and list's thereof)     |
-| [`visualizations.py`](https://github.com/osu-capstone-afrl/photogrammetry-capture-motion/blob/melodic/scripts/visualizations.py) | 3D Plots of Generated Paths using list of H.Transforms. Powered by MatPlotLib.
-| [`rviz_pose_array.py`](https://github.com/osu-capstone-afrl/photogrammetry-capture-motion/blob/melodic/scripts/rviz_pose_array.py) | ROS Node for publishing a 'pose array' object. Array composed of all frames in generated path.
+| [`transformations.py`](https://github.com/osu-capstone-afrl/photogrammetry_capture_motion/blob/melodic/scripts/transformations.py) | Tool Class for creating, manipulating, and converting Homogeneous Transformation Matrixes (and list's thereof)     |
+| [`visualizations.py`](https://github.com/osu-capstone-afrl/photogrammetry_capture_motion/blob/melodic/scripts/visualizations.py) | 3D Plots of Generated Paths using list of H.Transforms. Powered by MatPlotLib.
+| [`rviz_pose_array.py`](https://github.com/osu-capstone-afrl/photogrammetry_capture_motion/blob/melodic/scripts/rviz_pose_array.py) | ROS Node for publishing a 'pose array' object. Array composed of all frames in generated path.
 
 Any unlisted files are safe for users to ignore. They are likely left over testing or debugging code that should be removed eventually. 
 
@@ -138,7 +138,7 @@ For consistency and clarity, we highlight some terms here and explain what they 
 * **Locator** refers to the part's position relative to the robot's base frame.
 * **Message** a list of position in `[x, y, z]` and orientation in quaternion `[qx, qy, qz, qw]` used by ROS.
 * **Orientation** a rotation matrix, often part of a homogenous transformation.
-* **Path Plan** a [`path_plans.py`](https://github.com/osu-capstone-afrl/photogrammetry-capture-motion/blob/melodic/scripts/path_plans.py) object or the list of messages held in the object's `pose_andorientation` member variable.
+* **Path Plan** a [`path_plans.py`](https://github.com/osu-capstone-afrl/photogrammetry_capture_motion/blob/melodic/scripts/path_plans.py) object or the list of messages held in the object's `pose_andorientation` member variable.
 * **Pose** in this code refers exclusively to the combination of a position and orientation needed to describe a frame.  Poses are formatted into messages for ROS.
 * **Position** abbreviated as posn. a list of `[x, y, z]`, often part of a homogenous transformation.
 * **Rotation** the angle between the robot's x-axis and the part's x-axis in degrees.

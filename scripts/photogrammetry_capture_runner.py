@@ -11,7 +11,7 @@ import time
 import json
 import sys
 import os
-from photogrammetry-capture-motion.srv import TakePhotoMsg
+from photogrammetry_capture_motion.srv import TakePhotoMsg
 # hacky code to import the camera module
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)

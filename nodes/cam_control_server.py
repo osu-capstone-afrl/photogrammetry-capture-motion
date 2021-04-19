@@ -2,12 +2,12 @@
 
 import rospy
 import subprocess
-from photogrammetry-capture-motion.srv import TakePhotoMsg
+from photogrammetry_capture_motion.srv import TakePhotoMsg
 
 def handle_take_photo(req):
     file_name = " --filename " + req.filepath  # make sure this doesn't repeat names
 
-    gphoto2 = "gphoto2
+    gphoto2 = "gphoto2"
     capture = " --capture-image-and-download"
     overwrite = " --force-overwrite"
     process_call = gphoto2 + file_name + capture + overwrite  # can remove overwrite if file_name is iterative "%n"

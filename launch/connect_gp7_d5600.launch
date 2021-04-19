@@ -8,6 +8,6 @@
     </include>
 
     <!-- Enable Robot Servos -->
-    <node pkg="rosservice" type="rosservice" name="robot_enable" args="call --wait /robot_enable"/>
+    <!-- <node pkg="rosservice" type="rosservice" name="robot_enable" args="call -w /robot_enable"/> -->
 
 </launch>
