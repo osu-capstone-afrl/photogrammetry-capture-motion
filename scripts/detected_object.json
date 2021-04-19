@@ -1,6 +1,7 @@
 {
   "type":"steppedrings",
-  "size":[0.06, 0.14, 0.14],
-  "posn":[0.48, 0.0, 0.32],
-  "orientation":[[0.866, -0.5, 0],[0.5, 0.866, 0],[0, 0, 1]]
+  "size":[0.06, 0.04, 0.14],
+  "posn":[0.7, 0, 0.3],
+  "orientation":[[0.866, -0.5, 0],[0.5, 0.866, 0],[0, 0, 1]],
+  "comment":"For steppedrings with rotated camera, use size=[0.06, 0.04, 0.14], posn=[0.06, 0.04, 0.14]"
 }
