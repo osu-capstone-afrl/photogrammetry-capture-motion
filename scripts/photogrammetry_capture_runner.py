@@ -11,11 +11,22 @@ import time
 import json
 import sys
 import os
+from photogrammetry-capture-motion.srv import TakePhotoMsg
 # hacky code to import the camera module
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(parent)
 #from camera import capture_photo
+
+
+def cam_control_client(filepath):
+    rospy.wait_for_service('d5600_take_photo')
+    try:
+        capture_photo = rospy.ServiceProxy('d5600_take_photo', TakePhotoMsg)
+        resp = capture_photo(filepath)
+        return resp
+    except rospy.ServiceException as e:
+        print("Service call failed: %s"%e)
 
 
 if __name__ == '__main__':
@@ -60,11 +71,14 @@ if __name__ == '__main__':
         # Attempt Incline Plane Motion
         print("\nEXECUTE INCLINED PLANES RASTER MOTION")
 
+        filepath = os.path.join(parent,'photos/test_photo.png')
+
         try:
-            for msg in plan.path_as_messages:
+            for i, msg in enumerate(plan.path_as_messages):
                 robot.goto_Quant_Orient(msg)
                 time.sleep(1)
-                # capture_photo()
+                filepath = os.path.join(parent,'photos/test_photo_%s.png' % (i))
+                cam_control_client(filepath)
                 # time.sleep(1)
         except KeyboardInterrupt:
             exit()
