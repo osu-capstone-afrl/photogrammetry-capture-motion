@@ -123,10 +123,11 @@ def main():
     parser = argparse.ArgumentParser(description="Input JSON file name")
     parser.add_argument('-json_name', '--json-name', type=str, default='detected_object.json')
     args = parser.parse_args()
-    json_name = args.json_name
 
+    json_name = args.json_name
     current = os.path.dirname(os.path.realpath(__file__))
-    fname = os.path.join(current, "detected_object.json")
+
+    fname = os.path.join(current, json_name)
     with open(fname, "r") as read_file:
         detected_object = json.load(read_file)
 
