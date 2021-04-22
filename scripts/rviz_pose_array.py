@@ -14,6 +14,7 @@ from path_plans import SteppedRings
 from path_plans import OrthogonalCapture
 from transformations import Transformations
 from utils import get_path_from_json
+import argparse
 import json
 import os
 import rospy
@@ -118,7 +119,11 @@ def node_cameraPoseArray(inputArray):
 
 #####################################################
 ## MAIN CODE ##
-def main():    
+def main():
+    parser = argparse.ArgumentParser(description="Input JSON file name")
+    parser.add_argument('-json_name', '--json-name', type=str, default='detected_object.json')
+    args = parser.parse_args()
+    json_name = args.json_name
     # Example detected object definition
     # TODO: Eliniate theis hacky logic and put a proper way to load a desired json file
     if False: # For manually defining the position in the code

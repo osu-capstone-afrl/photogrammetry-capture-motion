@@ -2,6 +2,7 @@ from path_plans import InclinedPlane
 from path_plans import SteppedRings
 from path_plans import OrthogonalCapture
 import numpy as np
+import argparse
 import json
 import sys
 import os
@@ -66,10 +67,13 @@ def get_path_from_json(structure):
 
 
 if __name__ == '__main__':
-    json_name = sys.argv[1]
+    parser = argparse.ArgumentParser(description="Input JSON file name")
+    parser.add_argument('-json_name', '--json-name', type=str, default='detected_object.json')
+    args = parser.parse_args()
+    json_name = args.json_name
     fname = os.path.join(current, json_name)
+    print str(json_name)
     with open(fname, "r") as read_file:
         json_structure = json.load(read_file)
 
-    print str(sys.argv[1])
     # get_path_from_json(json_structure)

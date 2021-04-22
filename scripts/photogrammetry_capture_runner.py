@@ -7,6 +7,7 @@ from path_plans import OrthogonalCapture
 from utils import get_path_from_json
 import numpy as np
 import geometry_msgs.msg
+import argparse
 import rospy
 import time
 import json
@@ -20,6 +21,10 @@ sys.path.append(parent)
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Input JSON file name")
+    parser.add_argument('-json_name', '--json-name', type=str, default='detected_object.json')
+    args = parser.parse_args()
+    json_name = args.json_name
     try:
         print "----------------------------------------------------------"
         print "            Photogrammetry Image Capture Tool             "
@@ -41,8 +46,7 @@ if __name__ == '__main__':
 
         ## PLANNING ##
         # Example detected object definition
-
-        fname = os.path.join(current, "detected_object.json")
+        fname = os.path.join(current, json_name)
         with open(fname, "r") as read_file:
             detected_object = json.load(read_file)
 
