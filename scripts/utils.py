@@ -22,7 +22,7 @@ def get_path_from_json(structure):
     @param structure: dictionary of of a loaded json file.
     """
     size = structure['size']
-    position = structure['posn']
+    position = structure['position']
     orientation = np.array(structure['orientation'])
     path_type = structure['type']
     if path_type == 'SteppedRings':
