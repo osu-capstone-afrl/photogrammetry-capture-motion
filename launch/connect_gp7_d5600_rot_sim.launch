@@ -1,0 +1,8 @@
+<launch>
+
+    <!-- Connect to GP7 robot w/ Camera Rotated -->
+    <include file="$(find robot_gp7_d5600_rot_moveit_config)/launch/moveit_planning_execution.launch" >
+        <arg name="sim" value="true" />
+    </include>
+
+</launch>
