@@ -4,6 +4,7 @@ from robot_support import moveManipulator
 from path_plans import InclinedPlane
 from path_plans import SteppedRings
 from path_plans import OrthogonalCapture
+from utils import get_path_from_json
 import numpy as np
 import geometry_msgs.msg
 import rospy
@@ -45,23 +46,20 @@ if __name__ == '__main__':
         with open(fname, "r") as read_file:
             detected_object = json.load(read_file)
 
+        path = get_path_from_json(detected_object)
+
         object_size = detected_object['size']
-        object_posn = detected_object['posn']
+        object_posn = detected_object['position']
         orientation = np.array(detected_object['orientation'])
 
         # Add Object to Collision Planning Space
         robot.add_box_object(object_posn, object_size)
 
-        # create path plan
-        # plan = InclinedPlane(object_size, object_posn, np.identity(3), count=(3,3), slope=0.2, clearance=0.06, offset=0.02)
-        # plan = SteppedRings(object_size, object_posn, orientation, scale=1.01, offset=0.01, level_count=2, density=7)
-        plan = OrthogonalCapture(object_size, object_posn, orientation)
-
         # Attempt Incline Plane Motion
         print("\nEXECUTE INCLINED PLANES RASTER MOTION")
 
         try:
-            for msg in plan.path_as_messages:
+            for msg in path.path_as_messages:
                 robot.goto_Quant_Orient(msg)
                 time.sleep(1)
                 # capture_photo()

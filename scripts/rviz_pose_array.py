@@ -13,6 +13,7 @@ from path_plans import InclinedPlane
 from path_plans import SteppedRings
 from path_plans import OrthogonalCapture
 from transformations import Transformations
+from utils import get_path_from_json
 import json
 import os
 import rospy
@@ -138,21 +139,14 @@ def main():
         with open(fname, "r") as read_file:
             detected_object = json.load(read_file)
 
-        object_size = detected_object['size']
-        object_posn = detected_object['posn']
-        orientation = np.array(detected_object['orientation'])
-
-        if detected_object['type'] == 'steppedrings':
-            demo_blade = SteppedRings(object_size, object_posn, orientation) #, scale=1.01, offset=0.01, level_count=2, density=7)
-        else:
-            print 'Warning: invalid path type in rviz_pose_array.py'
-
+        path = get_path_from_json(detected_object)
+        object_posn = detected_object['position']
 
 
     ## Visualization in RVIZ
     # Generate PoseArray for ROS Node Publisher
     pose_geom = [rosmsg_geoPose([object_posn[0],object_posn[1],object_posn[2],0,0,0,0])]
-    for i in demo_blade.path_as_poses:
+    for i in path.path_as_poses:
         pose_geom.append(rosmsg_geoPose(i))
 
     # Try launching ros node
