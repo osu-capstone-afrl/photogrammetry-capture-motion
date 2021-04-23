@@ -37,6 +37,10 @@ if __name__ == '__main__':
     parser.add_argument('-json_name', '--json-name', type=str, default='detected_object.json')
     args = parser.parse_args()
     json_name = args.json_name
+
+    # Debug Settings
+    param_take_photos = True  # If True, use 'gphoto2' to take photos (via a ROS Service)
+
     try:
         print "----------------------------------------------------------"
         print "            Photogrammetry Image Capture Tool             "
@@ -81,11 +85,13 @@ if __name__ == '__main__':
                 print(">> SEND POSITION")
                 robot.goto_Quant_Orient(msg)
                 time.sleep(1)
-                print(">> ATTEMPT TO TAKE PHOTO")
-                filepath = os.path.join(parent,'photos/test_photo_%s.jpg' % (i))
-                cam_control_client(filepath)
-                print(">> PHOTO TAKEN")
-                # time.sleep(1)
+
+                if param_take_photos:
+                    print(">> ATTEMPT TO TAKE PHOTO")
+                    filepath = os.path.join(parent,'photos/test_photo_%s.jpg' % (i))
+                    cam_control_client(filepath)
+                    print(">> PHOTO TAKEN")
+                    # time.sleep(1)
         except KeyboardInterrupt:
             exit()
 

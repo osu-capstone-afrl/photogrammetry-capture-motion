@@ -5,11 +5,13 @@ import subprocess
 from photogrammetry_capture_motion.srv import TakePhotoMsg
 
 def handle_take_photo(req):
+    
+    # Hacky Method to ensure camera usb not claimed by another service. Fix in Future.
+    subprocess.call(["pkill", "-f", "gphoto2"])
+
+    # Take Photo
+    # 'Overwrite' = can remove overwrite if file_name is iterative "%n"
     file_name = " --filename " + req.filepath  # make sure this doesn't repeat names
-    gphoto2 = "gphoto2"
-    capture = " --capture-image-and-download"
-    overwrite = " --force-overwrite"
-    process_call = gphoto2 + capture + file_name + overwrite  # can remove overwrite if file_name is iterative "%n"
     subprocess.call(["gphoto2", "--capture-image-and-download", "--filename", req.filepath, "--force-overwrite"])
     
     return TakePhotoMsg(True)
