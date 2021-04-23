@@ -13,6 +13,8 @@ from path_plans import InclinedPlane
 from path_plans import SteppedRings
 from path_plans import OrthogonalCapture
 from transformations import Transformations
+from utils import get_path_from_json
+import argparse
 import json
 import os
 import rospy
@@ -117,42 +119,26 @@ def node_cameraPoseArray(inputArray):
 
 #####################################################
 ## MAIN CODE ##
-def main():    
-    # Example detected object definition
-    # TODO: Eliniate theis hacky logic and put a proper way to load a desired json file
-    if False: # For manually defining the position in the code
-        tf = Transformations()
-        object_size = [0.06, 0.14, 0.14]
-        object_posn = [0.48, 0.0, 0.32]
+def main():
+    parser = argparse.ArgumentParser(description="Input JSON file name")
+    parser.add_argument('-json_name', '--json-name', type=str, default='detected_object.json')
+    args = parser.parse_args()
 
-        orientation = tf.create_rotation_matrix([0],'z')
+    json_name = args.json_name
+    current = os.path.dirname(os.path.realpath(__file__))
 
-        ## Sample Use: Inclined Plane
-        # demo_blade = InclinedPlane(object_size, object_posn, np.identity(3), count=(3,3), slope=0.2, clearance=0.06, offset=0.02)
+    fname = os.path.join(current, json_name)
+    with open(fname, "r") as read_file:
+        detected_object = json.load(read_file)
 
-        ## Sample Use: Stepped Rings
-        demo_blade = SteppedRings(object_size, object_posn, orientation, scale=1.01, offset=0.1, level_count=2, density=7)
-    else: # for loading from the JSON file
-        current = os.path.dirname(os.path.realpath(__file__))
-        fname = os.path.join(current, "detected_object.json")
-        with open(fname, "r") as read_file:
-            detected_object = json.load(read_file)
-
-        object_size = detected_object['size']
-        object_posn = detected_object['posn']
-        orientation = np.array(detected_object['orientation'])
-
-        if detected_object['type'] == 'steppedrings':
-            demo_blade = SteppedRings(object_size, object_posn, orientation) #, scale=1.01, offset=0.01, level_count=2, density=7)
-        else:
-            print 'Warning: invalid path type in rviz_pose_array.py'
-
+    path = get_path_from_json(detected_object)
+    object_posn = detected_object['ObjectInfo']['position']
 
 
     ## Visualization in RVIZ
     # Generate PoseArray for ROS Node Publisher
     pose_geom = [rosmsg_geoPose([object_posn[0],object_posn[1],object_posn[2],0,0,0,0])]
-    for i in demo_blade.path_as_poses:
+    for i in path.path_as_poses:
         pose_geom.append(rosmsg_geoPose(i))
 
     # Try launching ros node

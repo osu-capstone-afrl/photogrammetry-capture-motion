@@ -3,6 +3,6 @@
     <!-- Launch Python Scripts for Motion Control & Pose Array Using input JSON -->
     <node pkg="photogrammetry-capture-motion" type="photogrammetry_capture_runner.py" name="motion_input" output="screen" launch-prefix="gnome-terminal --command" />
 
-    <node pkg="photogrammetry-capture-motion" type="rviz_pose_array.py" name="camera_positions_array" output="screen" />
+    <node pkg="photogrammetry-capture-motion" type="rviz_pose_array.py" name="pose_arrray" output="screen" launch-prefix="gnome-terminal --command" />
 
 </launch>
