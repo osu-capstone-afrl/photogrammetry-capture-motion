@@ -1,14 +1,14 @@
 {
   "PathType":"SteppedRings",
   "ObjectInfo":{
-    "size":[0.06, 0.04, 0.14],
-    "position":[0.7, 0, 0.3],
+    "size":[0.06, 0.08, 0.39],
+    "position":[0.84, 0, 0.2],
     "orientation":[[0.866, -0.5, 0],[0.5, 0.866, 0],[0, 0, 1]]
   },
   "SteppedRings": {
     "scale":null,
     "offset":null,
-    "level_count": null,
+    "level_count": 3,
     "density": null
   },
   "InclinedPlanes": {
