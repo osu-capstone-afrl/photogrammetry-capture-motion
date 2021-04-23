@@ -71,8 +71,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     json_name = args.json_name
     fname = os.path.join(current, json_name)
-    print str(json_name)
     with open(fname, "r") as read_file:
         json_structure = json.load(read_file)
 
-    # get_path_from_json(json_structure)
+    path_plan = get_path_from_json(json_structure)
