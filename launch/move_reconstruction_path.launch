@@ -1,8 +1,11 @@
 <launch>
 
     <!-- Launch Python Scripts for Motion Control & Pose Array Using input JSON -->
-    <node pkg="photogrammetry-capture-motion" type="photogrammetry_capture_runner.py" name="motion_input" output="screen" launch-prefix="gnome-terminal --command" />
+    <node pkg="photogrammetry_capture_motion" type="photogrammetry_capture_runner.py" name="motion_input" output="screen" launch-prefix="gnome-terminal --command" />
 
     <node pkg="photogrammetry-capture-motion" type="rviz_pose_array.py" name="pose_arrray" output="screen" launch-prefix="gnome-terminal --command" />
+
+    <!-- Establish Camera Connection -->
+    <node pkg="photogrammetry_capture_motion" type="cam_control_server.py" name="d5600_take_photo" output="screen" />
 
 </launch>

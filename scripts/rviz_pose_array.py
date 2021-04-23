@@ -102,7 +102,7 @@ def node_cameraPoseArray(inputArray):
 
     # Config node
     pub = rospy.Publisher('cameraPoseArray', PoseArray, queue_size=10) #TODO: couldn't get latch=True to work. Looping instead
-    rospy.init_node('cameraPoseArray', anonymous=True)
+    rospy.init_node('cameraPoseArray', anonymous=False)
     rate = rospy.Rate(1) # 10hz
 
     message = geometry_msgs.msg.PoseArray()

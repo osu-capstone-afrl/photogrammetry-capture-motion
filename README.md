@@ -17,7 +17,7 @@ The following section explains how to setup the package to work.
 
 ### Required Repositories
   Clone the below repositories into your catkin-tools workspace:
-  - [photogrammetry-capture-motion](https://github.com/osu-capstone-afrl/photogrammetry-capture-motion)
+  - [photogrammetry_capture_motion](https://github.com/osu-capstone-afrl/photogrammetry_capture_motion)
   - [ros-industrial/motoman](https://github.com/ros-industrial/motoman)
 
 
@@ -32,7 +32,7 @@ cd [PATH/TO/YOUR/WORKSPACE]
 # Install all dependencies of packages in the workspace
 rosdep install --from-paths src --ignore-src -r -y
 # Install all python dependencies
-pip install -r src/photogrammetry-capture-motion/requirements.txt
+pip install -r src/photogrammetry_capture_motion/requirements.txt
 # Build your workspace
 catkin build
 source devel/setup.bash
@@ -52,5 +52,5 @@ If a package is not found it is probably a third-party dependency, google the na
 
 ```shell
 roslaunch motoman_gp7_moveit_config moveit_planning_execution.launch sim:=true
-rosrun photogrammetry-capture-motion motion_inclined_plane.py
+rosrun photogrammetry_capture_motion motion_inclined_plane.py
 ```

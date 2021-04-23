@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>photogrammetry-capture-motion</name>
+  <name>photogrammetry_capture_motion</name>
   <version>0.0.1</version>
   <description>
     <p>ROS Package: "Photogrammetry Capture Motion"</p>
@@ -38,6 +38,9 @@
   <build_depend>moveit_visual_tools</build_depend>
   <build_depend>pcl_ros</build_depend>
   <build_depend>pcl_conversions</build_depend>
+
+  <build_depend>message_generation</build_depend>
+  <exec_depend>message_runtime</exec_depend>
 
   <exec_depend>motoman_gp7_moveit_config</exec_depend>
   <exec_depend>moveit_core</exec_depend>
