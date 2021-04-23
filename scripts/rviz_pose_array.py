@@ -132,7 +132,7 @@ def main():
         detected_object = json.load(read_file)
 
     path = get_path_from_json(detected_object)
-    object_posn = detected_object['position']
+    object_posn = detected_object['ObjectInfo']['position']
 
 
     ## Visualization in RVIZ

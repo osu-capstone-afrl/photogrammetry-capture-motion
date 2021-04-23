@@ -52,9 +52,9 @@ if __name__ == '__main__':
 
         path = get_path_from_json(detected_object)
 
-        object_size = detected_object['size']
-        object_posn = detected_object['position']
-        orientation = np.array(detected_object['orientation'])
+        object_size = detected_object['ObjectInfo']['size']
+        object_posn = detected_object['ObjectInfo']['position']
+        orientation = np.array(detected_object['ObjectInfo']['orientation'])
 
         # Add Object to Collision Planning Space
         robot.add_box_object(object_posn, object_size)
