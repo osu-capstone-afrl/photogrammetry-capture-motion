@@ -40,11 +40,11 @@ def get_path_from_json(structure):
                             level_count=opt['level_count'],
                             density=opt['density'],
                             )
-    elif path_type == 'InclinedPlane':
+    elif path_type == 'InclinedPlanes':
         a = inspect.getargspec(InclinedPlane.__init__)
         defaults = dict(zip(a.args[-len(a.defaults):],a.defaults))
 
-        opt = structure['InclinedPlane']
+        opt = structure['InclinedPlanes']
         for k in opt.keys():
             if opt[k] is None:
                 opt[k] = defaults[k]
